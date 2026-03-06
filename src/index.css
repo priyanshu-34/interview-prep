@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0f1419;
+  --bg-card: #1a2332;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-hover: #79b8ff;
+  --border: #30363d;
+  --success: #3fb950;
+  --danger: #f85149;
+  --warning: #d29922;
+}
+
+[data-theme="light"] {
+  --bg: #f6f8fa;
+  --bg-card: #ffffff;
+  --text: #1f2328;
+  --text-muted: #656d76;
+  --accent: #0969da;
+  --accent-hover: #0550ae;
+  --border: #d0d7de;
+  --success: #1a7f37;
+  --danger: #cf222e;
+  --warning: #9a6700;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+/* Heatmap cell scale */
+.heat-0 { background: var(--border); }
+.heat-1 { background: rgba(63, 185, 80, 0.35); }
+.heat-2 { background: rgba(63, 185, 80, 0.6); }
+.heat-3 { background: rgba(63, 185, 80, 0.85); }
+.heat-4 { background: #3fb950; }

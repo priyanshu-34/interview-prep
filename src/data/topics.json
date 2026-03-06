@@ -1,0 +1,110 @@
+[
+  {
+    "id": "topic_0_basics",
+    "trackId": "dsa",
+    "name": "Basics",
+    "order": 0
+  },
+  {
+    "id": "topic_1_sorting_techniques",
+    "trackId": "dsa",
+    "name": "Sorting Techniques",
+    "order": 1
+  },
+  {
+    "id": "topic_2_arrays",
+    "trackId": "dsa",
+    "name": "Arrays",
+    "order": 2
+  },
+  {
+    "id": "topic_3_binary_search",
+    "trackId": "dsa",
+    "name": "Binary Search",
+    "order": 3
+  },
+  {
+    "id": "topic_4_strings",
+    "trackId": "dsa",
+    "name": "Strings",
+    "order": 4
+  },
+  {
+    "id": "topic_5_linked_list",
+    "trackId": "dsa",
+    "name": "Linked List",
+    "order": 5
+  },
+  {
+    "id": "topic_6_recursion",
+    "trackId": "dsa",
+    "name": "Recursion",
+    "order": 6
+  },
+  {
+    "id": "topic_7_bit_manipulation",
+    "trackId": "dsa",
+    "name": "Bit Manipulation",
+    "order": 7
+  },
+  {
+    "id": "topic_8_stack__queue",
+    "trackId": "dsa",
+    "name": "Stack & Queue",
+    "order": 8
+  },
+  {
+    "id": "topic_9_two_pointers",
+    "trackId": "dsa",
+    "name": "Two Pointers",
+    "order": 9
+  },
+  {
+    "id": "topic_10_heaps",
+    "trackId": "dsa",
+    "name": "Heaps",
+    "order": 10
+  },
+  {
+    "id": "topic_11_greedy_algorithms",
+    "trackId": "dsa",
+    "name": "Greedy Algorithms",
+    "order": 11
+  },
+  {
+    "id": "topic_12_binary_tree",
+    "trackId": "dsa",
+    "name": "Binary Tree",
+    "order": 12
+  },
+  {
+    "id": "topic_13_binary_search_tree",
+    "trackId": "dsa",
+    "name": "Binary Search Tree",
+    "order": 13
+  },
+  {
+    "id": "topic_14_graphs",
+    "trackId": "dsa",
+    "name": "Graphs",
+    "order": 14
+  },
+  {
+    "id": "topic_15_dynamic_programming",
+    "trackId": "dsa",
+    "name": "Dynamic Programming",
+    "order": 15
+  },
+  {
+    "id": "topic_16_tries",
+    "trackId": "dsa",
+    "name": "Tries",
+    "order": 16
+  },
+  {
+    "id": "topic_17_strings",
+    "trackId": "dsa",
+    "name": "Strings",
+    "order": 17
+  }
+]
