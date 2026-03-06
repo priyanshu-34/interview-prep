@@ -3,6 +3,7 @@ import { Outlet, NavLink } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useTrack } from '../contexts/TrackContext';
+import { useFirestoreWriteCheck } from '../hooks/useFirestoreWriteCheck';
 import { tracks } from '../data';
 import { isAdmin } from '../lib/admin';
 
@@ -10,7 +11,9 @@ export function Layout() {
   const { theme, toggleTheme } = useTheme();
   const { user, loading: authLoading, signInWithGoogle, signInAnon, signOut } = useAuth();
   const { trackId, setTrackId } = useTrack();
+  const { writeFailed, error } = useFirestoreWriteCheck();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [dismissFirestoreBanner, setDismissFirestoreBanner] = useState(false);
 
   const showAdmin = user && isAdmin(user.email ?? undefined);
   const nav = [
@@ -26,6 +29,29 @@ export function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden w-full">
+      {writeFailed && !dismissFirestoreBanner && (
+        <div className="bg-amber-900/80 text-amber-100 border-b border-amber-600/50 px-3 py-2.5 flex items-center justify-between gap-2 flex-wrap">
+          <span className="text-sm">
+            <strong>Bookmarks and Mark done are not saving.</strong> {error}
+            {error?.includes('quota') ? null : (
+              <>
+                {' '}
+                Run: <code className="bg-amber-950/50 px-1.5 py-0.5 rounded text-xs font-mono">firebase deploy --only firestore:rules</code>
+                {' '}
+                (or paste <code className="bg-amber-950/50 px-1 rounded text-xs">firestore.rules</code> in Firebase Console → Firestore → Rules → Publish).
+              </>
+            )}
+          </span>
+          <button
+            type="button"
+            onClick={() => setDismissFirestoreBanner(true)}
+            className="text-amber-200 hover:text-white text-sm shrink-0"
+            aria-label="Dismiss"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
       <header className="sticky top-0 z-[100] w-full border-b border-[var(--border)] bg-[var(--bg)]/95 backdrop-blur safe-area-top shrink-0">
         <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 h-14 flex flex-nowrap items-center justify-between gap-2 min-w-0">
           <div className="flex flex-nowrap items-center gap-2 min-w-0 flex-1 overflow-hidden">

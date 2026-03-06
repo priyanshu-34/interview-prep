@@ -1,7 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import { useAuth } from '../contexts/AuthContext';
+import { useMemo } from 'react';
 import { useActivityHeatmap } from './useActivity';
 import { useActivity } from './useActivity';
 
@@ -37,46 +34,12 @@ function computeFromActivity(days: Record<string, number>, totalSolved: number) 
   return { totalSolved, currentStreak, longestStreak };
 }
 
+/** Stats computed from activity context only — no extra Firestore read for stats doc. */
 export function useStats() {
-  const { user } = useAuth();
   const days = useActivityHeatmap();
   const { solvedIds } = useActivity();
-  const [cached, setCached] = useState<{
-    totalSolved: number;
-    currentStreak: number;
-    longestStreak: number;
-  } | null>(null);
-
-  useEffect(() => {
-    if (!user) {
-      setCached(null);
-      return;
-    }
-    getDoc(doc(db, 'users', user.uid, 'stats', 'main'))
-      .then((snap) => {
-        const data = snap.data();
-        if (data && typeof data.totalSolved === 'number') {
-          setCached({
-            totalSolved: data.totalSolved,
-            currentStreak: Number(data.currentStreak) || 0,
-            longestStreak: Number(data.longestStreak) || 0,
-          });
-        } else {
-          setCached(null);
-        }
-      })
-      .catch(() => setCached(null));
-  }, [user?.uid, solvedIds.length]);
-
-  return useMemo(() => {
-    const computed = computeFromActivity(days, solvedIds.length);
-    if (cached) {
-      return {
-        totalSolved: cached.totalSolved,
-        currentStreak: cached.currentStreak,
-        longestStreak: cached.longestStreak,
-      };
-    }
-    return computed;
-  }, [days, solvedIds.length, cached]);
+  return useMemo(
+    () => computeFromActivity(days, solvedIds.length),
+    [days, solvedIds.length]
+  );
 }

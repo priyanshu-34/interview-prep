@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { ActivityProvider } from './contexts/ActivityContext';
+import { BookmarkProvider } from './contexts/BookmarkContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { TrackProvider } from './contexts/TrackContext';
 import { QuestionsProvider } from './contexts/QuestionsContext';
@@ -26,21 +28,25 @@ function App() {
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <TrackProvider>
-            <QuestionsProvider>
-              <Routes>
-                <Route path="/" element={<Layout />}>
-                  <Route index element={<Dashboard />} />
-                  <Route path="topic/:topicId" element={<TopicDetail />} />
-                  <Route path="cumulative" element={<Cumulative />} />
-                  <Route path="bookmarks" element={<Bookmarks />} />
-                  <Route path="notes" element={<Notes />} />
-                  <Route path="analytics" element={<Analytics />} />
-                  <Route path="admin" element={<AdminGuard><Admin /></AdminGuard>} />
-                </Route>
-              </Routes>
-            </QuestionsProvider>
-          </TrackProvider>
+          <ActivityProvider>
+            <BookmarkProvider>
+              <TrackProvider>
+                <QuestionsProvider>
+                  <Routes>
+                    <Route path="/" element={<Layout />}>
+                      <Route index element={<Dashboard />} />
+                      <Route path="topic/:topicId" element={<TopicDetail />} />
+                      <Route path="cumulative" element={<Cumulative />} />
+                      <Route path="bookmarks" element={<Bookmarks />} />
+                      <Route path="notes" element={<Notes />} />
+                      <Route path="analytics" element={<Analytics />} />
+                      <Route path="admin" element={<AdminGuard><Admin /></AdminGuard>} />
+                    </Route>
+                  </Routes>
+                </QuestionsProvider>
+              </TrackProvider>
+            </BookmarkProvider>
+          </ActivityProvider>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

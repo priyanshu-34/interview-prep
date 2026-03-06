@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "populate-difficulty": "node scripts/populate-difficulty.mjs"
+    "populate-difficulty": "node scripts/populate-difficulty.mjs",
+    "deploy:rules": "firebase deploy --only firestore:rules"
   },
   "dependencies": {
     "firebase": "^12.10.0",

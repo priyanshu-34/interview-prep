@@ -35,10 +35,11 @@ A React-based DSA (Data Structures & Algorithms) tracker for Striver-style quest
    # Edit .env and set VITE_FIREBASE_* variables
    ```
 
-   - Deploy Firestore rules (optional, for production):
+   - **Deploy Firestore rules** (required for bookmarks and "Mark as done" to save):
 
    ```bash
-   firebase deploy --only firestore:rules
+   npx firebase-tools use interview-dsa   # or your project ID
+   npm run deploy:rules
    ```
 
    Use the contents of `firestore.rules` in the Firebase Console → Firestore → Rules if you don’t use the CLI.
