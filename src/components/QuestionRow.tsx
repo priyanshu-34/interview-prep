@@ -36,34 +36,38 @@ export function QuestionRow({ q, showTopic, topicName }: QuestionRowProps) {
 
   return (
     <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3 sm:p-4">
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-        {showTopic && topicName && (
-          <span className="text-xs text-[var(--text-muted)] bg-[var(--bg)] px-2 py-0.5 rounded">
-            {topicName}
+      {/* Mobile/tablet: 2 rows. Desktop (lg): single row so list uses width better */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:gap-4">
+        <div className="flex flex-wrap items-start gap-2 sm:gap-3 lg:flex-1 lg:min-w-0 lg:flex-nowrap lg:items-center">
+          {showTopic && topicName && (
+            <span className="text-xs text-[var(--text-muted)] bg-[var(--bg)] px-2 py-0.5 rounded shrink-0">
+              {topicName}
+            </span>
+          )}
+          <span
+            className={`text-xs px-2 py-0.5 rounded capitalize w-14 sm:w-16 text-center shrink-0 ${q.difficulty === 'easy'
+                ? 'bg-green-900/30 text-green-400'
+                : q.difficulty === 'medium'
+                  ? 'bg-amber-900/30 text-amber-400'
+                  : q.difficulty === 'hard'
+                    ? 'bg-red-900/30 text-red-400'
+                    : 'bg-[var(--border)]/50 text-[var(--text-muted)]'
+              }`}
+            title={q.difficulty ? `Difficulty: ${q.difficulty}` : 'Difficulty not set'}
+          >
+            {q.difficulty ?? '—'}
           </span>
-        )}
-        <span
-          className={`text-xs px-2 py-0.5 rounded capitalize w-14 sm:w-16 text-center shrink-0 ${
-            q.difficulty === 'easy'
-              ? 'bg-green-900/30 text-green-400'
-              : q.difficulty === 'medium'
-                ? 'bg-amber-900/30 text-amber-400'
-                : q.difficulty === 'hard'
-                  ? 'bg-red-900/30 text-red-400'
-                  : 'bg-[var(--border)]/50 text-[var(--text-muted)]'
-          }`}
-          title={q.difficulty ? `Difficulty: ${q.difficulty}` : 'Difficulty not set'}
-        >
-          {q.difficulty ?? '—'}
-        </span>
-        <span className="font-medium text-[var(--text)] flex-1 min-w-0 text-sm sm:text-base">{q.title}</span>
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+          <span className="font-medium text-[var(--text)] flex-1 min-w-0 text-sm sm:text-base line-clamp-2 sm:line-clamp-none lg:line-clamp-1 break-words">
+            {q.title}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap mt-3 sm:mt-2 lg:mt-0 lg:shrink-0">
           {q.leetcodeLink && (
             <a
               href={q.leetcodeLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs sm:text-sm px-2 py-2 sm:py-1.5 rounded bg-amber-600/20 text-amber-400 hover:bg-amber-600/30 min-h-[44px] sm:min-h-0 flex items-center justify-center touch-target"
+              className="text-xs sm:text-sm px-3 py-2.5 sm:py-1.5 rounded bg-amber-600/20 text-amber-400 hover:bg-amber-600/30 min-h-[44px] flex items-center justify-center touch-manipulation"
             >
               LeetCode
             </a>
@@ -73,7 +77,7 @@ export function QuestionRow({ q, showTopic, topicName }: QuestionRowProps) {
               href={q.gfgLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs sm:text-sm px-2 py-2 sm:py-1.5 rounded bg-green-700/20 text-green-400 hover:bg-green-700/30 min-h-[44px] sm:min-h-0 flex items-center justify-center touch-target"
+              className="text-xs sm:text-sm px-3 py-2.5 sm:py-1.5 rounded bg-green-700/20 text-green-400 hover:bg-green-700/30 min-h-[44px] flex items-center justify-center touch-manipulation"
             >
               GFG
             </a>
@@ -83,7 +87,7 @@ export function QuestionRow({ q, showTopic, topicName }: QuestionRowProps) {
               href={q.youtubeLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs sm:text-sm px-2 py-2 sm:py-1.5 rounded bg-red-600/20 text-red-400 hover:bg-red-600/30 min-h-[44px] sm:min-h-0 flex items-center justify-center touch-target"
+              className="text-xs sm:text-sm px-3 py-2.5 sm:py-1.5 rounded bg-red-600/20 text-red-400 hover:bg-red-600/30 min-h-[44px] flex items-center justify-center touch-manipulation"
             >
               YouTube
             </a>
@@ -91,7 +95,7 @@ export function QuestionRow({ q, showTopic, topicName }: QuestionRowProps) {
           <button
             type="button"
             onClick={() => toggleBookmark(q.id)}
-            className={`p-2.5 sm:p-1.5 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] touch-target min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center ${bookmarked ? 'text-amber-400' : 'text-[var(--text-muted)]'} hover:bg-[var(--border)]`}
+            className={`p-2.5 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center touch-manipulation ${bookmarked ? 'text-amber-400' : 'text-[var(--text-muted)]'} hover:bg-[var(--border)]`}
             title={bookmarked ? 'Remove bookmark' : 'Bookmark'}
             aria-label={bookmarked ? 'Remove bookmark' : 'Bookmark this question'}
           >
@@ -101,9 +105,8 @@ export function QuestionRow({ q, showTopic, topicName }: QuestionRowProps) {
             type="button"
             onClick={() => canSaveProgress && (solved ? unmarkDone(q.id) : markDone(q.id))}
             disabled={!canSaveProgress}
-            className={`text-xs sm:text-sm px-2 py-2 sm:py-1 rounded border cursor-pointer select-none disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] min-h-[44px] sm:min-h-0 flex items-center touch-target ${
-              solved ? 'border-[var(--success)] text-[var(--success)] bg-[var(--success)]/10' : 'border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-card)]'
-            } ${!canSaveProgress ? 'hover:opacity-80' : ''}`}
+            className={`text-xs sm:text-sm px-3 py-2 sm:py-1 rounded border cursor-pointer select-none disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] min-h-[44px] flex items-center touch-manipulation ${solved ? 'border-[var(--success)] text-[var(--success)] bg-[var(--success)]/10' : 'border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-card)]'
+              } ${!canSaveProgress ? 'hover:opacity-80' : ''}`}
             title={canSaveProgress ? (solved ? 'Undo mark done' : 'Mark as done') : 'Sign in to save progress'}
             aria-label={canSaveProgress ? (solved ? 'Undo mark done' : 'Mark as done') : 'Sign in to save progress'}
           >
@@ -112,7 +115,7 @@ export function QuestionRow({ q, showTopic, topicName }: QuestionRowProps) {
           <button
             type="button"
             onClick={() => setShowNote(!showNote)}
-            className={`p-2.5 sm:p-1.5 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] touch-target min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center ${note ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'} hover:bg-[var(--border)]`}
+            className={`p-2.5 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center touch-manipulation ${note ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'} hover:bg-[var(--border)]`}
             title="Notes"
             aria-label={showNote ? 'Close notes' : 'Open notes'}
           >

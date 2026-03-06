@@ -28,29 +28,38 @@ export function Analytics() {
       <h1 className="text-xl sm:text-2xl font-bold text-[var(--text)] mb-4 sm:mb-6">Analytics</h1>
       <StatsCards />
       <section className="mt-6 sm:mt-8">
-        <h2 className="text-base sm:text-lg font-semibold text-[var(--text)] mb-3">Progress by topic</h2>
+        <h2 className="text-base sm:text-lg font-semibold text-[var(--text)] mb-3">Activity heatmap</h2>
+        <ActivityHeatmap />
+      </section>
+      <section className="mt-8 sm:mt-10">
+        <h2 className="text-base sm:text-lg font-semibold text-[var(--text)] mb-4">Progress by topic</h2>
         {topicBreakdown.length === 0 ? (
           <p className="text-sm text-[var(--text-muted)]">Mark questions as done to see breakdown.</p>
         ) : (
-          <ul className="space-y-2">
-            {topicBreakdown.map(({ topic, total, solved }) => (
-              <li key={topic.id} className="flex flex-wrap items-center gap-2 sm:gap-3 text-sm">
-                <span className="text-[var(--text)] font-medium w-full sm:w-auto sm:min-w-[140px]">{topic.name}</span>
-                <span className="text-[var(--text-muted)]">{solved} / {total}</span>
-                <div className="flex-1 max-w-[200px] h-2 rounded-full bg-[var(--border)] overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-[var(--success)]"
-                    style={{ width: total ? `${(solved / total) * 100}%` : 0 }}
-                  />
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {topicBreakdown.map(({ topic, total, solved }) => {
+              const pct = total ? Math.round((solved / total) * 100) : 0;
+              return (
+                <div
+                  key={topic.id}
+                  className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4"
+                >
+                  <div className="flex items-baseline justify-between gap-2 mb-2">
+                    <span className="text-[var(--text)] font-semibold truncate">{topic.name}</span>
+                    <span className="text-sm text-[var(--text-muted)] shrink-0">{solved} / {total}</span>
+                  </div>
+                  <div className="h-2.5 w-full rounded-full bg-[var(--border)] overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-[var(--success)] transition-all duration-300"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)] mt-1.5">{pct}% complete</p>
                 </div>
-              </li>
-            ))}
-          </ul>
+              );
+            })}
+          </div>
         )}
-      </section>
-      <section className="mt-8">
-        <h2 className="text-lg font-semibold text-[var(--text)] mb-3">Activity heatmap</h2>
-        <ActivityHeatmap />
       </section>
       <section className="mt-8">
         <h2 className="text-lg font-semibold text-[var(--text)] mb-3">Recent activity</h2>

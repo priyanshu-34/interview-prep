@@ -28,17 +28,17 @@ function App() {
         <AuthProvider>
           <TrackProvider>
             <QuestionsProvider>
-            <Routes>
-              <Route path="/" element={<Layout />}>
-                <Route index element={<Dashboard />} />
-                <Route path="topic/:topicId" element={<TopicDetail />} />
-                <Route path="cumulative" element={<Cumulative />} />
-                <Route path="bookmarks" element={<Bookmarks />} />
-                <Route path="notes" element={<Notes />} />
-                <Route path="analytics" element={<Analytics />} />
-                <Route path="admin" element={<AdminGuard><Admin /></AdminGuard>} />
-              </Route>
-            </Routes>
+              <Routes>
+                <Route path="/" element={<Layout />}>
+                  <Route index element={<Dashboard />} />
+                  <Route path="topic/:topicId" element={<TopicDetail />} />
+                  <Route path="cumulative" element={<Cumulative />} />
+                  <Route path="bookmarks" element={<Bookmarks />} />
+                  <Route path="notes" element={<Notes />} />
+                  <Route path="analytics" element={<Analytics />} />
+                  <Route path="admin" element={<AdminGuard><Admin /></AdminGuard>} />
+                </Route>
+              </Routes>
             </QuestionsProvider>
           </TrackProvider>
         </AuthProvider>

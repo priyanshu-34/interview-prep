@@ -33,10 +33,10 @@ export function ActivityHeatmap() {
   return (
     <div className="overflow-x-auto">
       <div className="inline-block min-w-0">
-        <p className="text-xs text-[var(--text-muted)] mb-2">Last {WEEKS} weeks (Sun–Sat)</p>
-        <div className="flex gap-0.5">
+        <p className="text-xs sm:text-sm text-[var(--text-muted)] mb-3">Last {WEEKS} weeks (Sun–Sat)</p>
+        <div className="flex gap-0.5 sm:gap-1 lg:gap-1.5">
           {Array.from({ length: WEEKS }, (_, week) => (
-            <div key={week} className="flex flex-col gap-0.5">
+            <div key={week} className="flex flex-col gap-0.5 sm:gap-1 lg:gap-1.5">
               {Array.from({ length: DAYS }, (_, day) => {
                 const idx = week * 7 + day;
                 const cell = cells[idx];
@@ -44,7 +44,7 @@ export function ActivityHeatmap() {
                 return (
                   <div
                     key={idx}
-                    className={`w-3 h-3 rounded-sm heat-${cell.level}`}
+                    className={`w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 rounded-sm heat-${cell.level}`}
                     title={`${cell.date}: ${cell.count} solved`}
                   />
                 );
@@ -52,10 +52,10 @@ export function ActivityHeatmap() {
             </div>
           ))}
         </div>
-        <div className="flex gap-2 items-center mt-2 text-xs text-[var(--text-muted)]">
+        <div className="flex gap-2 sm:gap-3 items-center mt-3 sm:mt-4 text-xs sm:text-sm text-[var(--text-muted)]">
           <span>Less</span>
           {[0, 1, 2, 3, 4].map((level) => (
-            <div key={level} className={`w-3 h-3 rounded-sm heat-${level}`} />
+            <div key={level} className={`w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 rounded-sm heat-${level}`} />
           ))}
           <span>More</span>
         </div>
