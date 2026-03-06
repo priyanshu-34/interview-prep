@@ -4,7 +4,9 @@ import { useQuestions } from '../contexts/QuestionsContext';
 import { getTopicById } from '../data';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useActivity } from '../hooks/useActivity';
-import { QuestionRow } from '../components/QuestionRow';
+import { QuestionTableRow } from '../components/QuestionTableRow';
+
+const CUMULATIVE_TABLE_COLS = 5;
 
 export function Cumulative() {
   const { trackId } = useTrack();
@@ -37,19 +39,19 @@ export function Cumulative() {
   return (
     <div>
       <h1 className="text-xl sm:text-2xl font-bold text-[var(--text)] mb-4 sm:mb-6">Cumulative</h1>
-      <div className="flex flex-wrap gap-3 sm:gap-4 mb-4 sm:mb-6">
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
         <input
           type="search"
-          placeholder="Search by title..."
+          placeholder="Search by title"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full sm:min-w-[200px] sm:w-auto bg-[var(--bg-card)] border border-[var(--border)] rounded-md px-3 py-2.5 sm:py-2 text-[var(--text)] placeholder-[var(--text-muted)] text-base"
+          className="w-full sm:w-48 rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 sm:py-1.5 text-sm text-[var(--text)] min-h-[44px] sm:min-h-0"
           aria-label="Search questions by title"
         />
         <select
           value={filterTopic}
           onChange={(e) => setFilterTopic(e.target.value)}
-          className="w-full sm:w-auto bg-[var(--bg-card)] border border-[var(--border)] rounded-md px-3 py-2.5 sm:py-2 text-[var(--text)] min-h-[44px] sm:min-h-0"
+          className="rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 sm:py-1.5 text-sm text-[var(--text)] min-h-[44px] sm:min-h-0"
         >
           <option value="">All topics</option>
           {topicIds.map((id) => {
@@ -62,7 +64,7 @@ export function Cumulative() {
         <select
           value={filterSolved}
           onChange={(e) => setFilterSolved(e.target.value as 'all' | 'solved' | 'unsolved')}
-          className="w-full sm:w-auto bg-[var(--bg-card)] border border-[var(--border)] rounded-md px-3 py-2.5 sm:py-2 text-[var(--text)] min-h-[44px] sm:min-h-0"
+          className="rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 sm:py-1.5 text-sm text-[var(--text)] min-h-[44px] sm:min-h-0"
         >
           <option value="all">All</option>
           <option value="solved">Solved</option>
@@ -71,7 +73,7 @@ export function Cumulative() {
         <select
           value={filterDifficulty}
           onChange={(e) => setFilterDifficulty(e.target.value)}
-          className="w-full sm:w-auto bg-[var(--bg-card)] border border-[var(--border)] rounded-md px-3 py-2.5 sm:py-2 text-[var(--text)] min-h-[44px] sm:min-h-0"
+          className="rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 sm:py-1.5 text-sm text-[var(--text)] min-h-[44px] sm:min-h-0"
           aria-label="Filter by difficulty"
         >
           <option value="">All difficulty</option>
@@ -79,29 +81,43 @@ export function Cumulative() {
           <option value="medium">Medium</option>
           <option value="hard">Hard</option>
         </select>
-        <label className="flex items-center gap-2 text-[var(--text)] min-h-[44px] sm:min-h-0 cursor-pointer">
+        <label className="flex items-center gap-2 text-sm text-[var(--text)] min-h-[44px] sm:min-h-0 cursor-pointer">
           <input
             type="checkbox"
             checked={filterBookmarked}
             onChange={(e) => setFilterBookmarked(e.target.checked)}
-            className="rounded border-[var(--border)] w-5 h-5"
+            className="rounded border-[var(--border)] w-4 h-4"
           />
           <span>Bookmarked only</span>
         </label>
       </div>
       <p className="text-sm text-[var(--text-muted)] mb-4">{filtered.length} questions</p>
-      <div className="space-y-3">
-        {filtered.map((q) => {
-          const topic = getTopicById(q.topicId);
-          return (
-            <QuestionRow
-              key={q.id}
-              q={q}
-              showTopic
-              topicName={topic?.name}
-            />
-          );
-        })}
+      <div className="overflow-x-auto -mx-3 sm:mx-0 rounded-lg border border-[var(--border)]">
+        <table className="w-full text-sm min-w-[640px]">
+          <thead>
+            <tr className="border-b border-[var(--border)] bg-[var(--bg)]">
+              <th className="text-left p-3 text-[var(--text-muted)]">Title</th>
+              <th className="text-left p-3 text-[var(--text-muted)]">Topic</th>
+              <th className="text-left p-3 text-[var(--text-muted)]">Difficulty</th>
+              <th className="text-left p-3 text-[var(--text-muted)]">Links</th>
+              <th className="p-3 text-[var(--text-muted)]">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((q) => {
+              const topic = getTopicById(q.topicId);
+              return (
+                <QuestionTableRow
+                  key={q.id}
+                  q={q}
+                  showTopic
+                  topicName={topic?.name}
+                  colSpan={CUMULATIVE_TABLE_COLS}
+                />
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );

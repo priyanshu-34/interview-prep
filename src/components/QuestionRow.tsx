@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useActivity } from '../hooks/useActivity';
 import { useNotes } from '../hooks/useNotes';
+import { NoteEditor } from './NoteEditor';
 import { useState, useEffect, useRef } from 'react';
 
 interface QuestionRowProps {
@@ -48,9 +49,7 @@ export function QuestionRow({ q, showTopic, topicName }: QuestionRowProps) {
 
   const saveNote = async (valueFromBlur?: string, closeAfterSave = false) => {
     const textToSave =
-      typeof valueFromBlur === 'string'
-        ? valueFromBlur
-        : (noteTextareaRef.current?.value ?? noteContent);
+      typeof valueFromBlur === 'string' ? valueFromBlur : noteContent;
     if (typeof textToSave !== 'string') return;
 
     setSaveStatus('saving');
@@ -159,20 +158,15 @@ export function QuestionRow({ q, showTopic, topicName }: QuestionRowProps) {
       </div>
       {showNote && (
         <div className="mt-3 pt-3 border-t border-[var(--border)]">
-          <label className="block text-xs text-[var(--text-muted)] mb-1.5">Your note (saved when you blur or click Save)</label>
-          <textarea
-            ref={noteTextareaRef}
+          <label className="block text-xs text-[var(--text-muted)] mb-1.5">
+            Your note (Markdown supported; click Save to save)
+          </label>
+          <NoteEditor
             value={noteContent}
-            onChange={(e) => setNoteContent(e.target.value)}
-            onBlur={async (e) => {
-              try {
-                await saveNote((e.target as HTMLTextAreaElement).value);
-              } catch {
-                // Error already shown via saveStatus/saveError
-              }
-            }}
+            onChange={setNoteContent}
             placeholder="Add notes, approach, dry run..."
-            className="w-full min-h-[100px] rounded border border-[var(--border)] bg-[var(--bg)] p-3 text-sm text-[var(--text)] placeholder-[var(--text-muted)] resize-y"
+            minHeight="140px"
+            textareaRef={noteTextareaRef}
           />
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <button
