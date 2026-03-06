@@ -38,12 +38,14 @@ content.forEach((section, sectionIndex) => {
   (section.categoryList || []).forEach((cat) => {
     (cat.questionList || []).forEach((q, qIndex) => {
       const id = `dsa_${topicId}_${q.questionId || qIndex}`;
+      const d = (q.difficulty || cat.difficulty || '').toLowerCase();
+      const difficulty = ['easy', 'medium', 'hard'].includes(d) ? d : null;
       questions.push({
         id,
         trackId: TRACK_ID,
         title: q.questionHeading || '',
         topicId,
-        difficulty: null,
+        difficulty,
         gfgLink: q.gfgLink || '',
         leetcodeLink: q.leetCodeLink || '',
         youtubeLink: q.youTubeLink || '',

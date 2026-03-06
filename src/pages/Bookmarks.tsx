@@ -1,10 +1,12 @@
 import { useTrack } from '../contexts/TrackContext';
 import { useBookmarks } from '../hooks/useBookmarks';
-import { getQuestionById, getTopicById } from '../data';
+import { getTopicById } from '../data';
+import { useQuestions } from '../contexts/QuestionsContext';
 import { QuestionRow } from '../components/QuestionRow';
 
 export function Bookmarks() {
   const { trackId } = useTrack();
+  const { getQuestionById } = useQuestions();
   const { bookmarkIds } = useBookmarks();
   const questions = bookmarkIds
     .map((id) => getQuestionById(id))

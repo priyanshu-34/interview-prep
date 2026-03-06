@@ -1,12 +1,14 @@
 import { useState, useMemo } from 'react';
 import { useTrack } from '../contexts/TrackContext';
-import { getQuestionsByTrack, getTopicById } from '../data';
+import { useQuestions } from '../contexts/QuestionsContext';
+import { getTopicById } from '../data';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useActivity } from '../hooks/useActivity';
 import { QuestionRow } from '../components/QuestionRow';
 
 export function Cumulative() {
   const { trackId } = useTrack();
+  const { getQuestionsByTrack } = useQuestions();
   const questions = getQuestionsByTrack(trackId);
   const { isBookmarked } = useBookmarks();
   const { isSolved } = useActivity();

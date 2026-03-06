@@ -3,18 +3,21 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useTrack } from '../contexts/TrackContext';
 import { tracks } from '../data';
+import { isAdmin } from '../lib/admin';
 
 export function Layout() {
   const { theme, toggleTheme } = useTheme();
   const { user, loading: authLoading, signInWithGoogle, signInAnon, signOut } = useAuth();
   const { trackId, setTrackId } = useTrack();
 
+  const showAdmin = user && isAdmin(user.email ?? undefined);
   const nav = [
     { to: '/', label: 'Dashboard' },
     { to: '/cumulative', label: 'Cumulative' },
     { to: '/bookmarks', label: 'Bookmarks' },
     { to: '/notes', label: 'Notes' },
     { to: '/analytics', label: 'Analytics' },
+    ...(showAdmin ? [{ to: '/admin', label: 'Admin' }] : []),
   ];
 
   return (

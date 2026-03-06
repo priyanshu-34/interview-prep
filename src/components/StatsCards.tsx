@@ -1,10 +1,11 @@
 import { useStats } from '../hooks/useStats';
-import { questions, getQuestionsByTrack } from '../data';
 import { useTrack } from '../contexts/TrackContext';
+import { useQuestions } from '../contexts/QuestionsContext';
 
 export function StatsCards() {
   const { totalSolved, currentStreak, longestStreak } = useStats();
   const { trackId } = useTrack();
+  const { questions, getQuestionsByTrack } = useQuestions();
   const totalInTrack = getQuestionsByTrack(trackId).length;
   const pct = totalInTrack > 0 ? Math.round((totalSolved / totalInTrack) * 100) : 0;
 

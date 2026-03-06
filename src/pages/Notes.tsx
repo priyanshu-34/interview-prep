@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 import { useTrack } from '../contexts/TrackContext';
 import { useNotes } from '../hooks/useNotes';
-import { getQuestionById, getTopicById } from '../data';
+import { getTopicById } from '../data';
+import { useQuestions } from '../contexts/QuestionsContext';
 import { QuestionRow } from '../components/QuestionRow';
 
 export function Notes() {
   const { trackId } = useTrack();
+  const { getQuestionById } = useQuestions();
   const { notes, loadAllNotes } = useNotes();
 
   useEffect(() => {

@@ -47,6 +47,17 @@ a:hover {
   text-decoration: underline;
 }
 
+/* Note markdown preview */
+.note-preview h1, .note-preview h2, .note-preview h3 { font-weight: 600; margin-top: 0.5em; margin-bottom: 0.25em; }
+.note-preview ul { list-style: disc; padding-left: 1.5rem; }
+.note-preview ol { list-style: decimal; padding-left: 1.5rem; }
+.note-preview code { background: var(--border); padding: 0.125rem 0.25rem; border-radius: 0.25rem; font-size: 0.875em; }
+.note-preview pre { background: var(--border); padding: 0.5rem; border-radius: 0.25rem; overflow-x: auto; margin: 0.5rem 0; }
+.note-preview pre code { background: none; padding: 0; }
+.note-preview a { color: var(--accent); }
+.note-preview p { margin: 0.25em 0; }
+.note-preview p:first-child { margin-top: 0; }
+
 /* Heatmap cell scale */
 .heat-0 { background: var(--border); }
 .heat-1 { background: rgba(63, 185, 80, 0.35); }

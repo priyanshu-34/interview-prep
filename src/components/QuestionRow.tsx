@@ -4,6 +4,7 @@ import { useBookmarks } from '../hooks/useBookmarks';
 import { useActivity } from '../hooks/useActivity';
 import { useNotes } from '../hooks/useNotes';
 import { useState, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 interface QuestionRowProps {
   q: Question;
@@ -41,19 +42,20 @@ export function QuestionRow({ q, showTopic, topicName }: QuestionRowProps) {
             {topicName}
           </span>
         )}
-        {q.difficulty && (
-          <span
-            className={`text-xs px-2 py-0.5 rounded capitalize ${
-              q.difficulty === 'easy'
-                ? 'bg-green-900/30 text-green-400'
-                : q.difficulty === 'medium'
-                  ? 'bg-amber-900/30 text-amber-400'
-                  : 'bg-red-900/30 text-red-400'
-            }`}
-          >
-            {q.difficulty}
-          </span>
-        )}
+        <span
+          className={`text-xs px-2 py-0.5 rounded capitalize w-16 text-center ${
+            q.difficulty === 'easy'
+              ? 'bg-green-900/30 text-green-400'
+              : q.difficulty === 'medium'
+                ? 'bg-amber-900/30 text-amber-400'
+                : q.difficulty === 'hard'
+                  ? 'bg-red-900/30 text-red-400'
+                  : 'bg-[var(--border)]/50 text-[var(--text-muted)]'
+          }`}
+          title={q.difficulty ? `Difficulty: ${q.difficulty}` : 'Difficulty not set'}
+        >
+          {q.difficulty ?? '—'}
+        </span>
         <span className="font-medium text-[var(--text)] flex-1 min-w-0">{q.title}</span>
         <div className="flex items-center gap-2 flex-wrap">
           {q.leetcodeLink && (
@@ -124,10 +126,15 @@ export function QuestionRow({ q, showTopic, topicName }: QuestionRowProps) {
             value={noteContent}
             onChange={(e) => setNoteContent(e.target.value)}
             onBlur={(e) => saveNote((e.target as HTMLTextAreaElement).value)}
-            placeholder="Add notes..."
+            placeholder="Add notes (Markdown supported)..."
             className="w-full min-h-[80px] rounded border border-[var(--border)] bg-[var(--bg)] p-2 text-sm text-[var(--text)] placeholder-[var(--text-muted)] resize-y"
           />
-          <button type="button" onClick={() => saveNote(noteContent)} className="mt-2 text-sm text-[var(--accent)] hover:underline">
+          {noteContent.trim() && (
+            <div className="note-preview mt-2 rounded border border-[var(--border)] bg-[var(--bg)] p-2 text-sm text-[var(--text)]">
+              <ReactMarkdown>{noteContent}</ReactMarkdown>
+            </div>
+          )}
+          <button type="button" onClick={() => saveNote(noteContent)} className="mt-2 text-sm text-[var(--accent)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]">
             Save note
           </button>
         </div>

@@ -23,6 +23,8 @@ export interface Question {
   leetcodeLink: string;
   youtubeLink: string;
   order: number;
+  /** If false, question is hidden from app (unpublished). Omitted or true = published. */
+  public?: boolean;
 }
 
 export interface ActivityDay {

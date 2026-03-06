@@ -8,6 +8,45 @@ function todayStr(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+function computeStreaks(activityDates: string[]): { currentStreak: number; longestStreak: number } {
+  const set = new Set(activityDates);
+  if (set.size === 0) return { currentStreak: 0, longestStreak: 0 };
+  let currentStreak = 0;
+  for (let i = 0; i < 365; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    if (set.has(dateStr)) currentStreak++;
+    else break;
+  }
+  const sorted = [...set].sort((a, b) => a.localeCompare(b));
+  let longestStreak = 1;
+  let run = 1;
+  for (let i = 1; i < sorted.length; i++) {
+    const [py, pm, pd] = sorted[i - 1].split('-').map(Number);
+    const [cy, cm, cd] = sorted[i].split('-').map(Number);
+    const prev = new Date(py, pm - 1, pd).getTime();
+    const curr = new Date(cy, cm - 1, cd).getTime();
+    if ((curr - prev) / (24 * 60 * 60 * 1000) === 1) run++;
+    else run = 1;
+    longestStreak = Math.max(longestStreak, run);
+  }
+  return { currentStreak, longestStreak };
+}
+
+async function updateCachedStats(
+  db: import('firebase/firestore').Firestore,
+  uid: string,
+  totalSolved: number,
+  activityDocs: { id: string; count: number }[]
+) {
+  const dates = activityDocs.filter((d) => d.count > 0).map((d) => d.id);
+  const { currentStreak, longestStreak } = computeStreaks(dates);
+  const lastActivityDate = dates.length > 0 ? dates.sort()[dates.length - 1] : null;
+  const ref = doc(db, 'users', uid, 'stats', 'main');
+  await setDoc(ref, { totalSolved, currentStreak, longestStreak, lastActivityDate }, { merge: true });
+}
+
 export function useActivity() {
   const { user } = useAuth();
   const [solvedSet, setSolvedSet] = useState<Set<string>>(new Set());
@@ -26,6 +65,13 @@ export function useActivity() {
         questionIds.push(questionId);
         await setDoc(ref, { questionIds, count: questionIds.length }, { merge: true });
         setSolvedSet((prev) => new Set(prev).add(questionId));
+        const activitySnap = await getDocs(collection(db, 'users', user.uid, 'activity'));
+        const docs = activitySnap.docs.map((d) => ({ id: d.id, count: Number(d.data()?.count) || 0 }));
+        const allIds = new Set<string>();
+        activitySnap.docs.forEach((d) => {
+          (d.data()?.questionIds ?? []).forEach((id: string) => allIds.add(id));
+        });
+        await updateCachedStats(db, user.uid, allIds.size, docs);
       } catch (err) {
         console.error('[Activity] Firestore markDone failed:', err);
       }
@@ -48,11 +94,15 @@ export function useActivity() {
         } else {
           await setDoc(ref, { questionIds, count: questionIds.length }, { merge: true });
         }
-        setSolvedSet((prev) => {
-          const next = new Set(prev);
-          next.delete(questionId);
-          return next;
+        const activitySnap = await getDocs(collection(db, 'users', user.uid, 'activity'));
+        const ids = new Set<string>();
+        activitySnap.docs.forEach((docSnap) => {
+          const arr = docSnap.data()?.questionIds;
+          if (Array.isArray(arr)) arr.forEach((id: string) => ids.add(id));
         });
+        setSolvedSet(ids);
+        const docs = activitySnap.docs.map((d) => ({ id: d.id, count: Number(d.data()?.count) || 0 }));
+        await updateCachedStats(db, user.uid, ids.size, docs);
       } catch (err) {
         console.error('[Activity] Firestore unmarkDone failed:', err);
       }
@@ -73,7 +123,7 @@ export function useActivity() {
     }
     let cancelled = false;
     getDocs(collection(db, 'users', user.uid, 'activity'))
-      .then((snap) => {
+      .then(async (snap) => {
         if (cancelled) return;
         const ids = new Set<string>();
         snap.docs.forEach((d) => {
@@ -81,6 +131,12 @@ export function useActivity() {
           if (Array.isArray(arr)) arr.forEach((id: string) => ids.add(id));
         });
         setSolvedSet(ids);
+        const docs = snap.docs.map((d) => ({ id: d.id, count: Number(d.data()?.count) || 0 }));
+        try {
+          await updateCachedStats(db, user!.uid, ids.size, docs);
+        } catch {
+          // ignore stats write failure on load
+        }
       })
       .catch((err) => {
         console.error('[Activity] Firestore load failed:', err);

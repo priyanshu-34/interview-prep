@@ -21,3 +21,8 @@ if (!firebaseConfig.projectId || !firebaseConfig.apiKey) {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+/** Firestore document IDs cannot contain '/'. Use this when referencing question docs by id. */
+export function questionDocId(id: string): string {
+  return id.replace(/\//g, '__');
+}

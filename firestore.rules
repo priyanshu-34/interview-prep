@@ -1,8 +1,14 @@
+// Deploy: run "firebase deploy --only firestore:rules" or paste this file into Firebase Console → Firestore → Rules → Publish
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{userId}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    // Questions: read by anyone; write only by admin email
+    match /questions/{qId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && request.auth.token.email == 'priyanshu.sjce@gmail.com';
     }
   }
 }
