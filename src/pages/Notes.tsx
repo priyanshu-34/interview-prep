@@ -20,7 +20,7 @@ export function Notes() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-[var(--text)] mb-6">Notes</h1>
+      <h1 className="text-xl sm:text-2xl font-bold text-[var(--text)] mb-4 sm:mb-6">Notes</h1>
       {questionsWithNotes.length === 0 ? (
         <p className="text-[var(--text-muted)]">No notes yet. Add notes from any question row (notes icon).</p>
       ) : (

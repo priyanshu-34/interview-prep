@@ -20,8 +20,8 @@ export function Dashboard() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-[var(--text)] mb-6">Dashboard</h1>
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 mb-6">
+      <h1 className="text-xl sm:text-2xl font-bold text-[var(--text)] mb-4 sm:mb-6">Dashboard</h1>
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 sm:p-4 mb-4 sm:mb-6">
         <p className="text-[var(--text)] font-medium">
           {totalSolved} / {totalInTrack} solved
           {currentStreak > 0 && (
@@ -30,7 +30,7 @@ export function Dashboard() {
         </p>
         <p className="text-sm text-[var(--text-muted)] mt-2 italic">&ldquo;{dailyQuote.quote}&rdquo; — {dailyQuote.author}</p>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {topics.map((topic) => {
           const qs = getQuestionsByTopic(topic.id);
           const solved = qs.filter((q) => isSolved(q.id)).length;

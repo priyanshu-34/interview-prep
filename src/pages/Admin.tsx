@@ -87,17 +87,17 @@ export function Admin() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-[var(--text)] mb-6">Admin – Questions</h1>
+      <h1 className="text-xl sm:text-2xl font-bold text-[var(--text)] mb-4 sm:mb-6">Admin – Questions</h1>
       {saveError && (
         <p className="mb-4 p-3 rounded border border-red-500/50 bg-red-500/10 text-red-400 text-sm">{saveError}</p>
       )}
-      <div className="flex flex-wrap items-center gap-4 mb-6">
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
         <input
           type="search"
           placeholder="Search by title"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-1.5 text-sm text-[var(--text)] w-48"
+          className="w-full sm:w-48 rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 sm:py-1.5 text-sm text-[var(--text)] min-h-[44px] sm:min-h-0"
         />
         <select
           value={filterTrack}
@@ -105,7 +105,7 @@ export function Admin() {
             setFilterTrack(e.target.value);
             setFilterTopic('');
           }}
-          className="rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-1.5 text-sm text-[var(--text)]"
+          className="rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 sm:py-1.5 text-sm text-[var(--text)] min-h-[44px] sm:min-h-0"
         >
           <option value="">All tracks</option>
           {tracks.map((t) => (
@@ -115,7 +115,7 @@ export function Admin() {
         <select
           value={filterTopic}
           onChange={(e) => setFilterTopic(e.target.value)}
-          className="rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-1.5 text-sm text-[var(--text)]"
+          className="rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 sm:py-1.5 text-sm text-[var(--text)] min-h-[44px] sm:min-h-0"
         >
           <option value="">All topics</option>
           {topics.map((t) => (
@@ -125,7 +125,7 @@ export function Admin() {
         <select
           value={filterDifficulty}
           onChange={(e) => setFilterDifficulty(e.target.value)}
-          className="rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-1.5 text-sm text-[var(--text)]"
+          className="rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 sm:py-1.5 text-sm text-[var(--text)] min-h-[44px] sm:min-h-0"
         >
           <option value="">All difficulty</option>
           <option value="easy">Easy</option>
@@ -135,7 +135,7 @@ export function Admin() {
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value as 'all' | 'published' | 'unpublished')}
-          className="rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-1.5 text-sm text-[var(--text)]"
+          className="rounded border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 sm:py-1.5 text-sm text-[var(--text)] min-h-[44px] sm:min-h-0"
         >
           <option value="all">All status</option>
           <option value="published">Published</option>
@@ -158,8 +158,8 @@ export function Admin() {
         </button>
       </div>
       <p className="text-sm text-[var(--text-muted)] mb-4">{filtered.length} questions</p>
-      <div className="overflow-x-auto rounded-lg border border-[var(--border)]">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto -mx-3 sm:mx-0 rounded-lg border border-[var(--border)]">
+        <table className="w-full text-sm min-w-[640px]">
           <thead>
             <tr className="border-b border-[var(--border)] bg-[var(--bg)]">
               <th className="text-left p-3 text-[var(--text-muted)]">Title</th>
@@ -194,10 +194,11 @@ export function Admin() {
                     </span>
                   </td>
                   <td className="p-3">
+                    <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
                       onClick={() => { setEditing(q); setAdding(false); setSaveError(null); }}
-                      className="mr-2 text-[var(--accent)] hover:underline"
+                      className="text-[var(--accent)] hover:underline py-1.5 px-1 min-h-[44px] sm:min-h-0 flex items-center"
                     >
                       Edit
                     </button>
@@ -205,7 +206,7 @@ export function Admin() {
                       <button
                         type="button"
                         onClick={() => setUnpublishingId(q.id)}
-                        className="mr-2 text-amber-500 hover:underline"
+                        className="text-amber-500 hover:underline py-1.5 px-1 min-h-[44px] sm:min-h-0 flex items-center"
                       >
                         Unpublish
                       </button>
@@ -221,11 +222,12 @@ export function Admin() {
                             setSaveError(err instanceof Error ? err.message : 'Publish failed');
                           }
                         }}
-                        className="mr-2 text-green-500 hover:underline"
+                        className="text-green-500 hover:underline py-1.5 px-1 min-h-[44px] sm:min-h-0 flex items-center"
                       >
                         Publish
                       </button>
                     )}
+                    </div>
                   </td>
                 </tr>
               );

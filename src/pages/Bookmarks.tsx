@@ -14,7 +14,7 @@ export function Bookmarks() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-[var(--text)] mb-6">Bookmarks</h1>
+      <h1 className="text-xl sm:text-2xl font-bold text-[var(--text)] mb-4 sm:mb-6">Bookmarks</h1>
       {questions.length === 0 ? (
         <p className="text-[var(--text-muted)]">No bookmarked questions. Bookmark from Dashboard or Cumulative.</p>
       ) : (

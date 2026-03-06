@@ -25,17 +25,17 @@ export function Analytics() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-[var(--text)] mb-6">Analytics</h1>
+      <h1 className="text-xl sm:text-2xl font-bold text-[var(--text)] mb-4 sm:mb-6">Analytics</h1>
       <StatsCards />
-      <section className="mt-8">
-        <h2 className="text-lg font-semibold text-[var(--text)] mb-3">Progress by topic</h2>
+      <section className="mt-6 sm:mt-8">
+        <h2 className="text-base sm:text-lg font-semibold text-[var(--text)] mb-3">Progress by topic</h2>
         {topicBreakdown.length === 0 ? (
-          <p className="text-[var(--text-muted)]">Mark questions as done to see breakdown.</p>
+          <p className="text-sm text-[var(--text-muted)]">Mark questions as done to see breakdown.</p>
         ) : (
           <ul className="space-y-2">
             {topicBreakdown.map(({ topic, total, solved }) => (
-              <li key={topic.id} className="flex items-center gap-3 text-sm">
-                <span className="text-[var(--text)] font-medium min-w-[140px]">{topic.name}</span>
+              <li key={topic.id} className="flex flex-wrap items-center gap-2 sm:gap-3 text-sm">
+                <span className="text-[var(--text)] font-medium w-full sm:w-auto sm:min-w-[140px]">{topic.name}</span>
                 <span className="text-[var(--text-muted)]">{solved} / {total}</span>
                 <div className="flex-1 max-w-[200px] h-2 rounded-full bg-[var(--border)] overflow-hidden">
                   <div

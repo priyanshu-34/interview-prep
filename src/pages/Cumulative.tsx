@@ -36,20 +36,20 @@ export function Cumulative() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-[var(--text)] mb-6">Cumulative</h1>
-      <div className="flex flex-wrap gap-4 mb-6">
+      <h1 className="text-xl sm:text-2xl font-bold text-[var(--text)] mb-4 sm:mb-6">Cumulative</h1>
+      <div className="flex flex-wrap gap-3 sm:gap-4 mb-4 sm:mb-6">
         <input
           type="search"
           placeholder="Search by title..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="bg-[var(--bg-card)] border border-[var(--border)] rounded-md px-3 py-2 text-[var(--text)] placeholder-[var(--text-muted)] min-w-[200px]"
+          className="w-full sm:min-w-[200px] sm:w-auto bg-[var(--bg-card)] border border-[var(--border)] rounded-md px-3 py-2.5 sm:py-2 text-[var(--text)] placeholder-[var(--text-muted)] text-base"
           aria-label="Search questions by title"
         />
         <select
           value={filterTopic}
           onChange={(e) => setFilterTopic(e.target.value)}
-          className="bg-[var(--bg-card)] border border-[var(--border)] rounded-md px-3 py-2 text-[var(--text)]"
+          className="w-full sm:w-auto bg-[var(--bg-card)] border border-[var(--border)] rounded-md px-3 py-2.5 sm:py-2 text-[var(--text)] min-h-[44px] sm:min-h-0"
         >
           <option value="">All topics</option>
           {topicIds.map((id) => {
@@ -62,7 +62,7 @@ export function Cumulative() {
         <select
           value={filterSolved}
           onChange={(e) => setFilterSolved(e.target.value as 'all' | 'solved' | 'unsolved')}
-          className="bg-[var(--bg-card)] border border-[var(--border)] rounded-md px-3 py-2 text-[var(--text)]"
+          className="w-full sm:w-auto bg-[var(--bg-card)] border border-[var(--border)] rounded-md px-3 py-2.5 sm:py-2 text-[var(--text)] min-h-[44px] sm:min-h-0"
         >
           <option value="all">All</option>
           <option value="solved">Solved</option>
@@ -71,7 +71,7 @@ export function Cumulative() {
         <select
           value={filterDifficulty}
           onChange={(e) => setFilterDifficulty(e.target.value)}
-          className="bg-[var(--bg-card)] border border-[var(--border)] rounded-md px-3 py-2 text-[var(--text)]"
+          className="w-full sm:w-auto bg-[var(--bg-card)] border border-[var(--border)] rounded-md px-3 py-2.5 sm:py-2 text-[var(--text)] min-h-[44px] sm:min-h-0"
           aria-label="Filter by difficulty"
         >
           <option value="">All difficulty</option>
@@ -79,14 +79,14 @@ export function Cumulative() {
           <option value="medium">Medium</option>
           <option value="hard">Hard</option>
         </select>
-        <label className="flex items-center gap-2 text-[var(--text)]">
+        <label className="flex items-center gap-2 text-[var(--text)] min-h-[44px] sm:min-h-0 cursor-pointer">
           <input
             type="checkbox"
             checked={filterBookmarked}
             onChange={(e) => setFilterBookmarked(e.target.checked)}
-            className="rounded border-[var(--border)]"
+            className="rounded border-[var(--border)] w-5 h-5"
           />
-          Bookmarked only
+          <span>Bookmarked only</span>
         </label>
       </div>
       <p className="text-sm text-[var(--text-muted)] mb-4">{filtered.length} questions</p>

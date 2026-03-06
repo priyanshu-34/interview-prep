@@ -27,14 +27,14 @@ export function TopicDetail() {
 
   return (
     <div>
-      <Link to="/" className="text-[var(--accent)] hover:underline">← Dashboard</Link>
-      <h1 className="text-2xl font-bold text-[var(--text)] mt-4 mb-6">{topic.name}</h1>
-      <div className="flex flex-wrap items-center gap-4 mb-4">
+      <Link to="/" className="text-[var(--accent)] hover:underline text-sm sm:text-base">← Dashboard</Link>
+      <h1 className="text-xl sm:text-2xl font-bold text-[var(--text)] mt-4 mb-4 sm:mb-6">{topic.name}</h1>
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-4">
         <label className="text-sm text-[var(--text-muted)]">Difficulty:</label>
         <select
           value={filterDifficulty}
           onChange={(e) => setFilterDifficulty(e.target.value)}
-          className="rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+          className="w-full sm:w-auto rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] px-3 py-2.5 sm:py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] min-h-[44px] sm:min-h-0"
           aria-label="Filter by difficulty"
         >
           <option value="">All difficulty</option>
