@@ -21,7 +21,7 @@ export function Dashboard() {
   return (
     <div>
       <h1 className="text-xl sm:text-2xl font-bold text-[var(--text)] mb-4 sm:mb-6">Dashboard</h1>
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 sm:p-4 mb-4 sm:mb-6">
+      <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3 sm:p-4 mb-4 sm:mb-6">
         <p className="text-[var(--text)] font-medium">
           {totalSolved} / {totalInTrack} solved
           {currentStreak > 0 && (
@@ -38,9 +38,11 @@ export function Dashboard() {
             <Link
               key={topic.id}
               to={`/topic/${encodeURIComponent(topic.id)}`}
-              className="block rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-5 hover:border-[var(--accent)]/50 transition-colors no-underline text-[var(--text)]"
+              className="block rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-4 sm:p-5 hover:border-[var(--accent)]/50 hover:bg-[var(--bg-card)] transition-colors no-underline"
             >
-              <h2 className="font-semibold text-lg mb-2">{topic.name}</h2>
+              <h2 className="font-semibold text-lg mb-2 text-[var(--accent)] hover:underline">
+                {topic.name}
+              </h2>
               <p className="text-sm text-[var(--text-muted)]">
                 {solved} / {qs.length} solved
               </p>

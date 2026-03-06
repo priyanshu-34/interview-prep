@@ -30,7 +30,7 @@ export function Layout() {
         <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 h-14 flex flex-nowrap items-center justify-between gap-2 min-w-0">
           <div className="flex flex-nowrap items-center gap-2 min-w-0 flex-1 overflow-hidden">
             <NavLink to="/" className="font-semibold text-lg text-[var(--text)] no-underline hover:no-underline hover:text-[var(--accent)] shrink-0 truncate" onClick={closeMobileMenu}>
-              DSA Tracker
+              AlgoInterview
             </NavLink>
             <nav className="hidden md:flex items-center gap-1 shrink-0 flex-nowrap">
               {nav.map(({ to, label }) => (

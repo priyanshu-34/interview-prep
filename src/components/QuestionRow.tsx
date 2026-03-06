@@ -1,5 +1,7 @@
 import type { Question } from '../types';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { LeetCodeIcon, GFGIcon, YouTubeIcon, CheckCircleIcon, NotesIcon } from './Icons';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useActivity } from '../hooks/useActivity';
 import { useNotes } from '../hooks/useNotes';
@@ -69,9 +71,19 @@ export function QuestionRow({ q, showTopic, topicName }: QuestionRowProps) {
 
   return (
     <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3 sm:p-4">
-      {/* Mobile/tablet: 2 rows. Desktop (lg): single row so list uses width better */}
+      {/* Mobile: line 1 = title only, line 2 = links + options. Desktop (lg): single row */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:gap-4">
-        <div className="flex flex-wrap items-start gap-2 sm:gap-3 lg:flex-1 lg:min-w-0 lg:flex-nowrap lg:items-center">
+        {/* Line 1 on mobile: question name only */}
+        <div className="w-full lg:flex-1 lg:min-w-0 order-1 lg:order-none">
+          <Link
+            to={`/question/${encodeURIComponent(q.id)}`}
+            className="font-medium text-[var(--text)] text-sm sm:text-base break-words hover:text-[var(--accent)] hover:underline"
+          >
+            {q.title}
+          </Link>
+        </div>
+        {/* Line 2 on mobile: topic, difficulty, links, bookmark, mark done, notes */}
+        <div className="flex items-center gap-2 flex-wrap mt-2 lg:mt-0 lg:shrink-0 order-2">
           {showTopic && topicName && (
             <span className="text-xs text-[var(--text-muted)] bg-[var(--bg)] px-2 py-0.5 rounded shrink-0">
               {topicName}
@@ -90,19 +102,16 @@ export function QuestionRow({ q, showTopic, topicName }: QuestionRowProps) {
           >
             {q.difficulty ?? '—'}
           </span>
-          <span className="font-medium text-[var(--text)] flex-1 min-w-0 text-sm sm:text-base line-clamp-2 sm:line-clamp-none lg:line-clamp-1 break-words">
-            {q.title}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap mt-3 sm:mt-2 lg:mt-0 lg:shrink-0">
           {q.leetcodeLink && (
             <a
               href={q.leetcodeLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs sm:text-sm px-3 py-2.5 sm:py-1.5 rounded bg-amber-600/20 text-amber-400 hover:bg-amber-600/30 min-h-[44px] flex items-center justify-center touch-manipulation"
+              className="p-2.5 rounded bg-amber-600/20 text-amber-400 hover:bg-amber-600/30 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center touch-manipulation"
+              title="LeetCode"
+              aria-label="Open on LeetCode"
             >
-              LeetCode
+              <LeetCodeIcon />
             </a>
           )}
           {q.gfgLink && (
@@ -110,9 +119,11 @@ export function QuestionRow({ q, showTopic, topicName }: QuestionRowProps) {
               href={q.gfgLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs sm:text-sm px-3 py-2.5 sm:py-1.5 rounded bg-green-700/20 text-green-400 hover:bg-green-700/30 min-h-[44px] flex items-center justify-center touch-manipulation"
+              className="p-2.5 rounded bg-green-700/20 text-green-400 hover:bg-green-700/30 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center touch-manipulation"
+              title="GeeksForGeeks"
+              aria-label="Open on GFG"
             >
-              GFG
+              <GFGIcon />
             </a>
           )}
           {q.youtubeLink && (
@@ -120,9 +131,11 @@ export function QuestionRow({ q, showTopic, topicName }: QuestionRowProps) {
               href={q.youtubeLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs sm:text-sm px-3 py-2.5 sm:py-1.5 rounded bg-red-600/20 text-red-400 hover:bg-red-600/30 min-h-[44px] flex items-center justify-center touch-manipulation"
+              className="p-2.5 rounded bg-red-600/20 text-red-400 hover:bg-red-600/30 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center touch-manipulation"
+              title="YouTube"
+              aria-label="Open on YouTube"
             >
-              YouTube
+              <YouTubeIcon />
             </a>
           )}
           <button
@@ -138,12 +151,11 @@ export function QuestionRow({ q, showTopic, topicName }: QuestionRowProps) {
             type="button"
             onClick={() => canSaveProgress && (solved ? unmarkDone(q.id) : markDone(q.id))}
             disabled={!canSaveProgress}
-            className={`text-xs sm:text-sm px-3 py-2 sm:py-1 rounded border cursor-pointer select-none disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] min-h-[44px] flex items-center touch-manipulation ${solved ? 'border-[var(--success)] text-[var(--success)] bg-[var(--success)]/10' : 'border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-card)]'
-              } ${!canSaveProgress ? 'hover:opacity-80' : ''}`}
+            className={`p-2.5 rounded flex items-center justify-center touch-manipulation disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 ${solved ? 'text-[var(--success)]' : 'text-[var(--text-muted)] hover:bg-[var(--border)]'} ${!canSaveProgress ? 'hover:opacity-80' : ''}`}
             title={canSaveProgress ? (solved ? 'Undo mark done' : 'Mark as done') : 'Sign in to save progress'}
             aria-label={canSaveProgress ? (solved ? 'Undo mark done' : 'Mark as done') : 'Sign in to save progress'}
           >
-            {solved ? 'Done' : 'Mark done'}
+            <CheckCircleIcon filled={solved} />
           </button>
           <button
             type="button"
@@ -152,7 +164,7 @@ export function QuestionRow({ q, showTopic, topicName }: QuestionRowProps) {
             title="Notes"
             aria-label={showNote ? 'Close notes' : 'Open notes'}
           >
-            📝
+            <NotesIcon />
           </button>
         </div>
       </div>

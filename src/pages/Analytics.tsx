@@ -42,7 +42,7 @@ export function Analytics() {
               return (
                 <div
                   key={topic.id}
-                  className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4"
+                  className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-4"
                 >
                   <div className="flex items-baseline justify-between gap-2 mb-2">
                     <span className="text-[var(--text)] font-semibold truncate">{topic.name}</span>

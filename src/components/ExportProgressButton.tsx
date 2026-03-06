@@ -18,7 +18,7 @@ export function ExportProgressButton() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `dsa-progress-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `algointerview-progress-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -36,7 +36,7 @@ export function ExportProgressButton() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `dsa-progress-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `algointerview-progress-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };

@@ -4,6 +4,7 @@ import { useQuestions } from '../contexts/QuestionsContext';
 import { getTopicById } from '../data';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useActivity } from '../hooks/useActivity';
+import { QuestionRow } from '../components/QuestionRow';
 import { QuestionTableRow } from '../components/QuestionTableRow';
 
 const CUMULATIVE_TABLE_COLS = 5;
@@ -92,7 +93,22 @@ export function Cumulative() {
         </label>
       </div>
       <p className="text-sm text-[var(--text-muted)] mb-4">{filtered.length} questions</p>
-      <div className="overflow-x-auto -mx-3 sm:mx-0 rounded-lg border border-[var(--border)]">
+      {/* Mobile: card list with line 1 = title, line 2 = links + options */}
+      <div className="md:hidden space-y-3">
+        {filtered.map((q) => {
+          const topic = getTopicById(q.topicId);
+          return (
+            <QuestionRow
+              key={q.id}
+              q={q}
+              showTopic
+              topicName={topic?.name}
+            />
+          );
+        })}
+      </div>
+      {/* Desktop: table */}
+      <div className="hidden md:block overflow-x-auto -mx-3 sm:mx-0 rounded-lg border border-[var(--border)]">
         <table className="w-full text-sm min-w-[640px]">
           <thead>
             <tr className="border-b border-[var(--border)] bg-[var(--bg)]">

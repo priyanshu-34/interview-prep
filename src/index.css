@@ -5,10 +5,10 @@
   --bg-card: #1a2332;
   --text: #e6edf3;
   --text-muted: #8b949e;
-  --accent: #58a6ff;
-  --accent-hover: #79b8ff;
+  --accent: #60a5fa;
+  --accent-hover: #93c5fd;
   --border: #30363d;
-  --success: #3fb950;
+  --success: #34d399;
   --danger: #f85149;
   --warning: #d29922;
 }
@@ -172,17 +172,17 @@ a:hover {
 }
 
 .heat-1 {
-  background: rgba(63, 185, 80, 0.35);
+  background: rgba(52, 211, 153, 0.35);
 }
 
 .heat-2 {
-  background: rgba(63, 185, 80, 0.6);
+  background: rgba(52, 211, 153, 0.6);
 }
 
 .heat-3 {
-  background: rgba(63, 185, 80, 0.85);
+  background: rgba(52, 211, 153, 0.85);
 }
 
 .heat-4 {
-  background: #3fb950;
+  background: #34d399;
 }

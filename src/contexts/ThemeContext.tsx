@@ -17,7 +17,7 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-const STORAGE_KEY = 'dsa-tracker-theme';
+const STORAGE_KEY = 'algointerview-theme';
 
 function getInitialTheme(): Theme {
   if (typeof window === 'undefined') return 'dark';

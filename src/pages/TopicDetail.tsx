@@ -2,6 +2,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useState, useMemo } from 'react';
 import { getTopicById } from '../data';
 import { useQuestions } from '../contexts/QuestionsContext';
+import { QuestionRow } from '../components/QuestionRow';
 import { QuestionTableRow } from '../components/QuestionTableRow';
 
 const TOPIC_TABLE_COLS = 4; // Title, Difficulty, Links, Actions (no Topic column)
@@ -47,7 +48,14 @@ export function TopicDetail() {
           {questions.length} of {allQuestions.length} questions
         </span>
       </div>
-      <div className="overflow-x-auto -mx-3 sm:mx-0 rounded-lg border border-[var(--border)]">
+      {/* Mobile: card list with line 1 = title, line 2 = links + options */}
+      <div className="md:hidden space-y-3">
+        {questions.map((q) => (
+          <QuestionRow key={q.id} q={q} />
+        ))}
+      </div>
+      {/* Desktop: table */}
+      <div className="hidden md:block overflow-x-auto -mx-3 sm:mx-0 rounded-lg border border-[var(--border)]">
         <table className="w-full text-sm min-w-[540px]">
           <thead>
             <tr className="border-b border-[var(--border)] bg-[var(--bg)]">

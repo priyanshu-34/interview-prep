@@ -1,6 +1,7 @@
 import type { Question } from '../types';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { LeetCodeIcon, GFGIcon, YouTubeIcon, CheckCircleIcon, NotesIcon } from './Icons';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useActivity } from '../hooks/useActivity';
 import { useNotes } from '../hooks/useNotes';
@@ -91,15 +92,17 @@ export function QuestionTableRow({ q, showTopic, topicName, colSpan }: QuestionT
           </span>
         </td>
         <td className="p-3">
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
             {q.leetcodeLink && (
               <a
                 href={q.leetcodeLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs px-2 py-1 rounded bg-amber-600/20 text-amber-400 hover:bg-amber-600/30"
+                className="p-1.5 rounded bg-amber-600/20 text-amber-400 hover:bg-amber-600/30"
+                title="LeetCode"
+                aria-label="Open on LeetCode"
               >
-                LeetCode
+                <LeetCodeIcon className="w-4 h-4" />
               </a>
             )}
             {q.gfgLink && (
@@ -107,9 +110,11 @@ export function QuestionTableRow({ q, showTopic, topicName, colSpan }: QuestionT
                 href={q.gfgLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs px-2 py-1 rounded bg-green-700/20 text-green-400 hover:bg-green-700/30"
+                className="p-1.5 rounded bg-green-700/20 text-green-400 hover:bg-green-700/30"
+                title="GeeksForGeeks"
+                aria-label="Open on GFG"
               >
-                GFG
+                <GFGIcon className="w-4 h-4" />
               </a>
             )}
             {q.youtubeLink && (
@@ -117,9 +122,11 @@ export function QuestionTableRow({ q, showTopic, topicName, colSpan }: QuestionT
                 href={q.youtubeLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs px-2 py-1 rounded bg-red-600/20 text-red-400 hover:bg-red-600/30"
+                className="p-1.5 rounded bg-red-600/20 text-red-400 hover:bg-red-600/30"
+                title="YouTube"
+                aria-label="Open on YouTube"
               >
-                YouTube
+                <YouTubeIcon className="w-4 h-4" />
               </a>
             )}
             {!q.leetcodeLink && !q.gfgLink && !q.youtubeLink && (
@@ -142,10 +149,11 @@ export function QuestionTableRow({ q, showTopic, topicName, colSpan }: QuestionT
               type="button"
               onClick={() => canSaveProgress && (solved ? unmarkDone(q.id) : markDone(q.id))}
               disabled={!canSaveProgress}
-              className={`text-xs px-2 py-1 rounded border ${solved ? 'border-[var(--success)] text-[var(--success)] bg-[var(--success)]/10' : 'border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-card)]'} disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]`}
+              className={`p-1.5 rounded flex items-center justify-center disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${solved ? 'text-[var(--success)]' : 'text-[var(--text-muted)] hover:bg-[var(--border)]'}`}
               title={canSaveProgress ? (solved ? 'Undo' : 'Mark done') : 'Sign in to save'}
+              aria-label={canSaveProgress ? (solved ? 'Undo mark done' : 'Mark done') : 'Sign in to save'}
             >
-              {solved ? 'Done' : 'Mark done'}
+              <CheckCircleIcon className="w-4 h-4" filled={solved} />
             </button>
             <button
               type="button"
@@ -154,7 +162,7 @@ export function QuestionTableRow({ q, showTopic, topicName, colSpan }: QuestionT
               title="Notes"
               aria-label="Notes"
             >
-              📝
+              <NotesIcon className="w-4 h-4" />
             </button>
           </div>
         </td>
