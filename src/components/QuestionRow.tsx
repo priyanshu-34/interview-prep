@@ -3,8 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useActivity } from '../hooks/useActivity';
 import { useNotes } from '../hooks/useNotes';
-import { useState, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
+import { useState, useEffect, useRef } from 'react';
 
 interface QuestionRowProps {
   q: Question;
@@ -16,22 +15,57 @@ export function QuestionRow({ q, showTopic, topicName }: QuestionRowProps) {
   const { user } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const { isSolved, markDone, unmarkDone } = useActivity();
-  const { getNote, setNote } = useNotes();
+  const { getNote, setNote, loadNote } = useNotes();
   const [showNote, setShowNote] = useState(false);
   const [noteContent, setNoteContent] = useState('');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const noteTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const bookmarked = isBookmarked(q.id);
   const solved = isSolved(q.id);
   const note = getNote(q.id);
   const canSaveProgress = !!user;
 
+  // When opening the panel, show saved note: use in-memory getNote first, else fetch from Firestore.
+  // Only run when showNote or q.id changes so we don't overwrite the user's typing when notes load.
   useEffect(() => {
-    if (showNote) setNoteContent(getNote(q.id)?.content ?? '');
-  }, [showNote, q.id, getNote]);
+    if (!showNote) return;
+    const existing = getNote(q.id);
+    if (existing != null) {
+      setNoteContent(existing.content ?? '');
+      return;
+    }
+    let cancelled = false;
+    loadNote(q.id).then((loaded) => {
+      if (!cancelled && loaded != null) setNoteContent(loaded.content ?? '');
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only sync on open; omit getNote to avoid overwriting while typing
+  }, [showNote, q.id]);
 
-  const saveNote = (contentToSave: string) => {
-    setNote(q.id, contentToSave);
-    setShowNote(false);
+  const saveNote = async (valueFromBlur?: string, closeAfterSave = false) => {
+    const textToSave =
+      typeof valueFromBlur === 'string'
+        ? valueFromBlur
+        : (noteTextareaRef.current?.value ?? noteContent);
+    if (typeof textToSave !== 'string') return;
+
+    setSaveStatus('saving');
+    setSaveError(null);
+    setNoteContent(textToSave);
+    try {
+      await setNote(q.id, textToSave);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2500);
+      if (closeAfterSave) setShowNote(false);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setSaveError(message);
+      setSaveStatus('error');
+    }
   };
 
   return (
@@ -125,21 +159,39 @@ export function QuestionRow({ q, showTopic, topicName }: QuestionRowProps) {
       </div>
       {showNote && (
         <div className="mt-3 pt-3 border-t border-[var(--border)]">
+          <label className="block text-xs text-[var(--text-muted)] mb-1.5">Your note (saved when you blur or click Save)</label>
           <textarea
+            ref={noteTextareaRef}
             value={noteContent}
             onChange={(e) => setNoteContent(e.target.value)}
-            onBlur={(e) => saveNote((e.target as HTMLTextAreaElement).value)}
-            placeholder="Add notes (Markdown supported)..."
-            className="w-full min-h-[80px] rounded border border-[var(--border)] bg-[var(--bg)] p-2 text-sm text-[var(--text)] placeholder-[var(--text-muted)] resize-y"
+            onBlur={async (e) => {
+              try {
+                await saveNote((e.target as HTMLTextAreaElement).value);
+              } catch {
+                // Error already shown via saveStatus/saveError
+              }
+            }}
+            placeholder="Add notes, approach, dry run..."
+            className="w-full min-h-[100px] rounded border border-[var(--border)] bg-[var(--bg)] p-3 text-sm text-[var(--text)] placeholder-[var(--text-muted)] resize-y"
           />
-          {noteContent.trim() && (
-            <div className="note-preview mt-2 rounded border border-[var(--border)] bg-[var(--bg)] p-2 text-sm text-[var(--text)]">
-              <ReactMarkdown>{noteContent}</ReactMarkdown>
-            </div>
-          )}
-          <button type="button" onClick={() => saveNote(noteContent)} className="mt-2 text-sm text-[var(--accent)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]">
-            Save note
-          </button>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => saveNote(undefined, true)}
+              disabled={saveStatus === 'saving'}
+              className="text-sm text-[var(--accent)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] disabled:opacity-60 disabled:no-underline"
+            >
+              {saveStatus === 'saving' ? 'Saving…' : 'Save note'}
+            </button>
+            {saveStatus === 'saved' && (
+              <span className="text-sm text-[var(--success)]">Note saved.</span>
+            )}
+            {saveStatus === 'error' && saveError && (
+              <span className="text-sm text-red-400" title={saveError}>
+                Failed to save: {saveError}
+              </span>
+            )}
+          </div>
         </div>
       )}
     </div>

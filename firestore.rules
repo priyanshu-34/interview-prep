@@ -5,6 +5,16 @@ service cloud.firestore {
     match /users/{userId}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+    // Explicit rules for user subcollections (notes, activity, bookmarks)
+    match /users/{userId}/notes/{noteId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    match /users/{userId}/activity/{dateId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    match /users/{userId}/bookmarks/{docId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
     // Questions: read by anyone; write only by admin email
     match /questions/{qId} {
       allow read: if true;

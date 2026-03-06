@@ -5,7 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 
 /** Firestore document IDs cannot contain /. Use a safe id for the path. */
 function toNoteDocId(questionId: string): string {
-  return questionId.replace(/\//g, '__SLASH__');
+  const safe = questionId.replace(/\//g, '__SLASH__').trim();
+  return safe || 'unknown';
 }
 function fromNoteDocId(docId: string): string {
   return docId.replace(/__SLASH__/g, '/');
@@ -33,25 +34,28 @@ export function useNotes() {
   );
 
   const setNote = useCallback(
-    async (questionId: string, content: string) => {
-      if (!user) {
-        console.warn('[Notes] Not saved: no user signed in.');
-        return;
+    async (questionId: string, content: string): Promise<void> => {
+      if (!user?.uid) {
+        throw new Error('Not signed in. Sign in to save notes.');
       }
+      const noteText = typeof content === 'string' ? content : '';
       const updatedAt = new Date().toISOString();
-      setNotes((prev) => ({ ...prev, [questionId]: { content, updatedAt } }));
+      const docId = toNoteDocId(questionId);
+      if (!docId || docId === 'unknown') {
+        throw new Error('Invalid question id.');
+      }
+      setNotes((prev) => ({ ...prev, [questionId]: { content: noteText, updatedAt } }));
       try {
-        const docId = toNoteDocId(questionId);
         const ref = doc(db, 'users', user.uid, 'notes', docId);
-        await setDoc(ref, { content, updatedAt }, { merge: true });
-        if (import.meta.env.DEV) console.log('[Notes] Saved:', questionId);
+        await setDoc(ref, { content: noteText, updatedAt }, { merge: true });
       } catch (err) {
-        console.error('[Notes] Firestore save failed:', err);
         setNotes((prev) => {
           const next = { ...prev };
           delete next[questionId];
           return next;
         });
+        const message = err instanceof Error ? err.message : String(err);
+        throw new Error(message);
       }
     },
     [user]
