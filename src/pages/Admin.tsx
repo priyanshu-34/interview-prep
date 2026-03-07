@@ -1,12 +1,20 @@
 import { useState, useMemo, useEffect } from 'react';
-import { doc, setDoc, writeBatch } from 'firebase/firestore';
+import { doc, setDoc, writeBatch, getDoc } from 'firebase/firestore';
 import { db, questionDocId } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useQuestions } from '../contexts/QuestionsContext';
 import { tracks, getTopicsByTrack, getTopicById } from '../data';
 import { isAdmin } from '../lib/admin';
+import {
+  isOpenAIEnabled,
+  generateQuestionData,
+  DEFAULT_SYSTEM_PROMPT_DSA,
+  DEFAULT_SYSTEM_PROMPT_SYSTEM_DESIGN,
+} from '../lib/openai';
 import type { Question } from '../types';
 import questionsJson from '../data/questions.json';
+
+const CONFIG_PROMPTS_REF = 'prompts';
 
 const BATCH_SIZE = 500;
 
@@ -31,6 +39,29 @@ export function Admin() {
   const [importing, setImporting] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<'all' | 'published' | 'unpublished'>('all');
+  const [systemPrompts, setSystemPrompts] = useState<{ dsa: string; systemDesign: string }>({
+    dsa: DEFAULT_SYSTEM_PROMPT_DSA,
+    systemDesign: DEFAULT_SYSTEM_PROMPT_SYSTEM_DESIGN,
+  });
+  const [showPromptsModal, setShowPromptsModal] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const snap = await getDoc(doc(db, 'config', CONFIG_PROMPTS_REF));
+        if (snap.exists() && snap.data()) {
+          const d = snap.data();
+          setSystemPrompts({
+            dsa: typeof d.dsa === 'string' ? d.dsa : DEFAULT_SYSTEM_PROMPT_DSA,
+            systemDesign: typeof d.systemDesign === 'string' ? d.systemDesign : DEFAULT_SYSTEM_PROMPT_SYSTEM_DESIGN,
+          });
+        }
+      } catch {
+        // keep defaults
+      }
+    };
+    load();
+  }, []);
 
   const topics = useMemo(() => (filterTrack ? getTopicsByTrack(filterTrack) : []), [filterTrack]);
 
@@ -160,6 +191,15 @@ export function Admin() {
         >
           {importing ? 'Importing…' : 'Import from JSON'}
         </button>
+        {isOpenAIEnabled() && (
+          <button
+            type="button"
+            onClick={() => setShowPromptsModal(true)}
+            className="px-3 py-1.5 rounded border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text)] text-sm hover:bg-[var(--border)]"
+          >
+            Edit system prompts (AI)
+          </button>
+        )}
       </div>
       <p className="text-sm text-[var(--text-muted)] mb-4">{filtered.length} questions</p>
       <div className="overflow-x-auto -mx-3 sm:mx-0 rounded-lg border border-[var(--border)]">
@@ -242,8 +282,22 @@ export function Admin() {
       {(adding || editing) && (
         <QuestionForm
           question={editing}
+          systemPromptDsa={systemPrompts.dsa}
+          systemPromptSystemDesign={systemPrompts.systemDesign}
           onClose={() => { setAdding(false); setEditing(null); setSaveError(null); }}
           onSaved={async () => { await refetch(); setAdding(false); setEditing(null); setSaveError(null); }}
+          onError={(msg) => setSaveError(msg)}
+        />
+      )}
+      {showPromptsModal && (
+        <SystemPromptsModal
+          initialDsa={systemPrompts.dsa}
+          initialSystemDesign={systemPrompts.systemDesign}
+          onClose={() => setShowPromptsModal(false)}
+          onSaved={(dsa, systemDesign) => {
+            setSystemPrompts({ dsa, systemDesign });
+            setShowPromptsModal(false);
+          }}
           onError={(msg) => setSaveError(msg)}
         />
       )}
@@ -259,14 +313,95 @@ export function Admin() {
   );
 }
 
+interface SystemPromptsModalProps {
+  initialDsa: string;
+  initialSystemDesign: string;
+  onClose: () => void;
+  onSaved: (dsa: string, systemDesign: string) => void;
+  onError: (msg: string) => void;
+}
+
+function SystemPromptsModal({
+  initialDsa,
+  initialSystemDesign,
+  onClose,
+  onSaved,
+  onError,
+}: SystemPromptsModalProps) {
+  const [dsa, setDsa] = useState(initialDsa);
+  const [systemDesign, setSystemDesign] = useState(initialSystemDesign);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    onError('');
+    try {
+      await setDoc(doc(db, 'config', CONFIG_PROMPTS_REF), { dsa, systemDesign });
+      onSaved(dsa, systemDesign);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'Failed to save prompts');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg)] max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+        <h2 className="text-lg font-semibold text-[var(--text)] mb-4">Edit system prompts (AI)</h2>
+        <p className="text-sm text-[var(--text-muted)] mb-4">
+          These prompts are sent to the model when you use &quot;Generate with AI&quot;. DSA is used for the DSA track; System Design for the System Design track.
+        </p>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">DSA system prompt</label>
+            <textarea
+              value={dsa}
+              onChange={(e) => setDsa(e.target.value)}
+              rows={8}
+              className="w-full rounded border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text)] font-mono resize-y"
+              placeholder="System prompt for DSA..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">System Design system prompt</label>
+            <textarea
+              value={systemDesign}
+              onChange={(e) => setSystemDesign(e.target.value)}
+              rows={12}
+              className="w-full rounded border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text)] font-mono resize-y"
+              placeholder="System prompt for System Design..."
+            />
+          </div>
+        </div>
+        <div className="flex gap-2 mt-4">
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-2 rounded bg-[var(--accent)] text-white hover:opacity-90 disabled:opacity-50"
+          >
+            {saving ? 'Saving…' : 'Save prompts'}
+          </button>
+          <button type="button" onClick={onClose} className="px-4 py-2 rounded border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg-card)]">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface QuestionFormProps {
   question: Question | null;
+  systemPromptDsa: string;
+  systemPromptSystemDesign: string;
   onClose: () => void;
   onSaved: () => void;
   onError: (msg: string) => void;
 }
 
-function QuestionForm({ question, onClose, onSaved, onError }: QuestionFormProps) {
+function QuestionForm({ question, systemPromptDsa, systemPromptSystemDesign, onClose, onSaved, onError }: QuestionFormProps) {
   const isEdit = !!question;
   const [trackId, setTrackId] = useState(question?.trackId ?? tracks[0]?.id ?? 'dsa');
   const [topicId, setTopicId] = useState(question?.topicId ?? '');
@@ -282,9 +417,55 @@ function QuestionForm({ question, onClose, onSaved, onError }: QuestionFormProps
   );
   const [order, setOrder] = useState(question?.order ?? 0);
   const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+  const [customUserPrompt, setCustomUserPrompt] = useState('');
   const isSystemDesign = trackId === 'system-design';
 
   const topicsForTrack = useMemo(() => getTopicsByTrack(trackId), [trackId]);
+
+  const handleGenerateWithAI = async () => {
+    const topic = topicId ? getTopicById(topicId) : topicsForTrack[0];
+    const topicName = topic?.name ?? (title.trim() || 'DSA');
+    setGenerateError(null);
+    setGenerating(true);
+    try {
+      const data = await generateQuestionData(topicName, {
+        hint: title.trim() || undefined,
+        trackId,
+        userMessageOverride: customUserPrompt.trim() || undefined,
+        systemPrompt: trackId === 'system-design' ? systemPromptSystemDesign : systemPromptDsa,
+        existingQuestion: isEdit
+          ? {
+              title,
+              description: description || undefined,
+              explanation: explanation || undefined,
+              difficulty: difficulty || undefined,
+              leetcodeLink: leetcodeLink || undefined,
+              gfgLink: gfgLink || undefined,
+              youtubeLink: youtubeLink || undefined,
+              links: links.filter((l) => l.url?.trim()).length ? links : undefined,
+            }
+          : undefined,
+      });
+      setTitle(data.title);
+      setDescription(data.description);
+      setExplanation(data.explanation);
+      setDifficulty(data.difficulty);
+      setGfgLink(data.gfgLink);
+      setLeetcodeLink(data.leetcodeLink);
+      setYoutubeLink(data.youtubeLink);
+      setLinks(
+        data.links && data.links.length > 0
+          ? data.links.map((l) => ({ label: l.label, url: l.url }))
+          : [{ label: '', url: '' }]
+      );
+    } catch (err) {
+      setGenerateError(err instanceof Error ? err.message : 'AI generation failed');
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   useEffect(() => {
     if (!isEdit && topicsForTrack.length > 0 && !topicsForTrack.some((t) => t.id === topicId)) {
@@ -365,6 +546,33 @@ function QuestionForm({ question, onClose, onSaved, onError }: QuestionFormProps
               ))}
             </select>
           </div>
+          {isOpenAIEnabled() && (
+            <div className="space-y-2">
+              <div>
+                <label className="block text-sm text-[var(--text-muted)] mb-1">
+                  Custom user prompt (optional)
+                </label>
+                <textarea
+                  value={customUserPrompt}
+                  onChange={(e) => setCustomUserPrompt(e.target.value)}
+                  placeholder="Leave empty to use default (topic + title hint). Or type your own prompt to send to the model instead."
+                  rows={2}
+                  className="w-full rounded border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text)] resize-y"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleGenerateWithAI}
+                disabled={generating || !topicId}
+                className="w-full px-3 py-2 rounded border border-emerald-600/50 bg-emerald-600/20 text-emerald-400 text-sm hover:bg-emerald-600/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {generating ? 'Generating with OpenAI…' : 'Generate with AI (from topic)'}
+              </button>
+              {generateError && (
+                <p className="mt-1 text-xs text-red-400">{generateError}</p>
+              )}
+            </div>
+          )}
           <div>
             <label className="block text-sm text-[var(--text-muted)] mb-1">Title</label>
             <input
