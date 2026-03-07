@@ -5,6 +5,7 @@ import { BookmarkProvider } from './contexts/BookmarkContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { TrackProvider } from './contexts/TrackContext';
 import { QuestionsProvider } from './contexts/QuestionsContext';
+import { TopicsProvider } from './contexts/TopicsContext';
 import { Layout } from './components/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { TopicDetail } from './pages/TopicDetail';
@@ -36,6 +37,7 @@ function App() {
             <BookmarkProvider>
               <TrackProvider>
                 <QuestionsProvider>
+                  <TopicsProvider>
                   <Routes>
                     <Route path="/" element={<Layout />}>
                       <Route index element={<Dashboard />} />
@@ -51,6 +53,7 @@ function App() {
                       <Route path="admin" element={<AdminGuard><Admin /></AdminGuard>} />
                     </Route>
                   </Routes>
+                  </TopicsProvider>
                 </QuestionsProvider>
               </TrackProvider>
             </BookmarkProvider>

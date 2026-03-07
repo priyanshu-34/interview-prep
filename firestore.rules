@@ -30,9 +30,10 @@ service cloud.firestore {
       allow read: if true;
       allow create, update, delete: if request.auth != null && request.auth.token.email == 'priyanshu.sjce@gmail.com';
     }
-    // Config (e.g. AI prompts): admin only
+    // Config (prompts, custom topics): read by all so custom topic names show app-wide; write admin only
     match /config/{docId} {
-      allow read, write: if request.auth != null && request.auth.token.email == 'priyanshu.sjce@gmail.com';
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.email == 'priyanshu.sjce@gmail.com';
     }
   }
 }

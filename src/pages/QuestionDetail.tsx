@@ -2,13 +2,16 @@ import { useParams, Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
+import { useState } from 'react';
 import { useQuestions } from '../contexts/QuestionsContext';
-import { getTopicById } from '../data';
+import { useTopics } from '../contexts/TopicsContext';
 // import { useTrack } from '../contexts/TrackContext';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useActivity } from '../hooks/useActivity';
 import { useAuth } from '../contexts/AuthContext';
+import { isAdmin } from '../lib/admin';
 import { CheckCircleIcon } from '../components/Icons';
+import { QuestionForm } from '../components/QuestionForm';
 
 const isSystemDesign = (trackId: string) => trackId === 'system-design';
 
@@ -40,18 +43,22 @@ const markdownComponents = {
 export function QuestionDetail() {
   const { questionId } = useParams<{ questionId: string }>();
   const decodedId = questionId ? decodeURIComponent(questionId) : '';
-  const { getQuestionById } = useQuestions();
+  const { getQuestionById, refetch } = useQuestions();
   // const { trackId } = useTrack();
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const { isSolved, markDone, unmarkDone } = useActivity();
   const { user } = useAuth();
 
+  const { getTopicById } = useTopics();
   const q = decodedId ? getQuestionById(decodedId) : undefined;
   const topic = q ? getTopicById(q.topicId) : undefined;
   const systemDesign = q ? isSystemDesign(q.trackId) : false;
   const canSaveProgress = !!user;
   const bookmarked = q ? isBookmarked(q.id) : false;
   const solved = q ? isSolved(q.id) : false;
+  const showEditLink = !!user && isAdmin(user.email ?? undefined);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   if (!decodedId || !q) {
     return (
@@ -107,15 +114,19 @@ export function QuestionDetail() {
             </ReactMarkdown>
           </div>
         )}
-        {systemDesign && !q.description && (
+        {!q.description && (
           <p className="text-[var(--text-muted)] text-sm mb-6">
-            Use the resources below to read and understand this topic.
+            {systemDesign
+              ? 'Use the resources below to read and understand this topic.'
+              : 'No problem description added yet. Use the links below to solve on LeetCode, GFG, or YouTube.'}
           </p>
         )}
 
         {q.explanation && (
           <>
-            <h2 className="text-base font-semibold text-[var(--text)] mb-2 mt-6">Explanation</h2>
+            <h2 className="text-base font-semibold text-[var(--text)] mb-2 mt-6">
+              {systemDesign ? 'Explanation' : 'Solution / Approach'}
+            </h2>
             <div className="question-markdown text-[var(--text)] text-sm sm:text-base mb-6">
               <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]} components={markdownComponents}>
                 {q.explanation}
@@ -219,8 +230,28 @@ export function QuestionDetail() {
           >
             Open notes →
           </Link>
+          {showEditLink && (
+            <button
+              type="button"
+              onClick={() => { setShowEditForm(true); setEditError(null); }}
+              className="text-sm text-[var(--accent)] hover:underline"
+            >
+              Edit question (admin) →
+            </button>
+          )}
         </div>
       </div>
+      {showEditForm && showEditLink && q && (
+        <QuestionForm
+          question={q}
+          onClose={() => { setShowEditForm(false); setEditError(null); }}
+          onSaved={async () => { await refetch(); setShowEditForm(false); setEditError(null); }}
+          onError={(msg) => setEditError(msg)}
+        />
+      )}
+      {editError && (
+        <p className="mt-3 text-sm text-red-400">{editError}</p>
+      )}
     </div>
   );
 }

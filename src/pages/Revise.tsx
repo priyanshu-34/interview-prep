@@ -1,10 +1,10 @@
 // import { useTrack } from '../contexts/TrackContext';
 import { useRevisionQueue } from '../hooks/useRevisionQueue';
-import { getTopicById } from '../data';
+import { useTopics } from '../contexts/TopicsContext';
 import { QuestionRow } from '../components/QuestionRow';
 
 export function Revise() {
-  // const { trackId } = useTrack();
+  const { getTopicById } = useTopics();
   const questions = useRevisionQueue();
 
   return (

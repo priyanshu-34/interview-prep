@@ -105,7 +105,7 @@ export function QuestionRow({ q, showTopic, topicName }: QuestionRowProps) {
           >
             {q.difficulty ?? '—'}
           </span>
-          {q.links && q.links.length > 0 ? (
+          {q.trackId === 'system-design' && q.links && q.links.length > 0 ? (
             q.links.slice(0, 5).map((item, i) => (
               <a
                 key={i}

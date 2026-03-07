@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTrack } from '../contexts/TrackContext';
 import { useQuestions } from '../contexts/QuestionsContext';
-import { getTopicById } from '../data';
+import { useTopics } from '../contexts/TopicsContext';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useActivity } from '../hooks/useActivity';
 import { QuestionRow } from '../components/QuestionRow';
@@ -14,6 +14,7 @@ export function Cumulative() {
   const [searchParams] = useSearchParams();
   const topicFromUrl = searchParams.get('topic') ?? '';
   const { trackId } = useTrack();
+  const { getTopicById } = useTopics();
   const { getQuestionsByTrack } = useQuestions();
   const questions = getQuestionsByTrack(trackId);
   const { isBookmarked } = useBookmarks();

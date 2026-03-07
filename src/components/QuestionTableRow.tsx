@@ -96,7 +96,7 @@ export function QuestionTableRow({ q, showTopic, topicName, colSpan }: QuestionT
         </td>
         <td className="p-3">
           <div className="flex flex-wrap items-center gap-1.5">
-            {q.links && q.links.length > 0 ? (
+            {q.trackId === 'system-design' && q.links && q.links.length > 0 ? (
               q.links.slice(0, 5).map((item, i) => (
                 <a
                   key={i}

@@ -4,13 +4,14 @@ import { ActivityHeatmap } from '../components/ActivityHeatmap';
 import { StatsCards } from '../components/StatsCards';
 import { useRecentActivity, useActivity } from '../hooks/useActivity';
 import { useTrack } from '../contexts/TrackContext';
-import { getTopicsByTrack } from '../data';
+import { useTopics } from '../contexts/TopicsContext';
 import { useQuestions } from '../contexts/QuestionsContext';
 import { ExportProgressButton } from '../components/ExportProgressButton';
 
 export function Analytics() {
   const recent = useRecentActivity(14);
   const { trackId } = useTrack();
+  const { getTopicsByTrack } = useTopics();
   const { getQuestionsByTopic } = useQuestions();
   const { solvedIds } = useActivity();
   const topics = getTopicsByTrack(trackId);

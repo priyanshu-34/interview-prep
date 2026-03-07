@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTrack } from '../contexts/TrackContext';
-import { getTopicsByTrack, getTopicById } from '../data';
+import { useTopics } from '../contexts/TopicsContext';
 import { useQuestions } from '../contexts/QuestionsContext';
 import type { Question } from '../types';
 import { LeetCodeIcon, GFGIcon, YouTubeIcon } from '../components/Icons';
@@ -19,6 +19,7 @@ function shuffle<T>(arr: T[]): T[] {
 
 export function MockInterview() {
   const { trackId } = useTrack();
+  const { getTopicsByTrack, getTopicById } = useTopics();
   const { getQuestionsByTrack } = useQuestions();
   const topics = getTopicsByTrack(trackId);
   const allInTrack = useMemo(() => getQuestionsByTrack(trackId), [trackId, getQuestionsByTrack]);

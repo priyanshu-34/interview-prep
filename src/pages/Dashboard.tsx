@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import { useTrack } from '../contexts/TrackContext';
-import { getTopicsByTrack } from '../data';
+import { useTopics } from '../contexts/TopicsContext';
 import { useQuestions } from '../contexts/QuestionsContext';
 import { useActivity } from '../hooks/useActivity';
 import { useStats } from '../hooks/useStats';
@@ -13,6 +13,7 @@ const quotes = quotesData as { quote: string; author: string }[];
 
 export function Dashboard() {
   const { trackId } = useTrack();
+  const { getTopicsByTrack } = useTopics();
   const topics = getTopicsByTrack(trackId);
   const { getQuestionsByTopic } = useQuestions();
   const { isSolved, activityDays } = useActivity();

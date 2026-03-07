@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { useState, useMemo } from 'react';
-import { getTopicById } from '../data';
+import { useTopics } from '../contexts/TopicsContext';
 import { useQuestions } from '../contexts/QuestionsContext';
 import { QuestionRow } from '../components/QuestionRow';
 import { QuestionTableRow } from '../components/QuestionTableRow';
@@ -9,6 +9,7 @@ const TOPIC_TABLE_COLS = 4; // Title, Difficulty, Links, Actions (no Topic colum
 
 export function TopicDetail() {
   const { topicId } = useParams<{ topicId: string }>();
+  const { getTopicById } = useTopics();
   const { getQuestionsByTopic } = useQuestions();
   const topic = topicId ? getTopicById(decodeURIComponent(topicId)) : undefined;
   const allQuestions = topic ? getQuestionsByTopic(topic.id) : [];

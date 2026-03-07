@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useTrack } from '../contexts/TrackContext';
-import { getTopicsByTrack } from '../data';
+import { useTopics } from '../contexts/TopicsContext';
 import { useQuestions } from '../contexts/QuestionsContext';
 import { useActivity } from '../hooks/useActivity';
 
@@ -11,6 +11,7 @@ import { useActivity } from '../hooks/useActivity';
  */
 export function useReadinessScore(): number {
   const { trackId } = useTrack();
+  const { getTopicsByTrack } = useTopics();
   const topics = getTopicsByTrack(trackId);
   const { getQuestionsByTopic } = useQuestions();
   const { solvedIds } = useActivity();

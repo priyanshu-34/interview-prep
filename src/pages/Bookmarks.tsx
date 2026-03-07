@@ -1,11 +1,12 @@
 import { useTrack } from '../contexts/TrackContext';
 import { useBookmarks } from '../hooks/useBookmarks';
-import { getTopicById } from '../data';
+import { useTopics } from '../contexts/TopicsContext';
 import { useQuestions } from '../contexts/QuestionsContext';
 import { QuestionRow } from '../components/QuestionRow';
 
 export function Bookmarks() {
   const { trackId } = useTrack();
+  const { getTopicById } = useTopics();
   const { getQuestionById } = useQuestions();
   const { bookmarkIds } = useBookmarks();
   const questions = bookmarkIds
