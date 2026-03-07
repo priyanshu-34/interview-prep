@@ -75,7 +75,7 @@ export function MockInterview() {
         </div>
         <p className="text-sm text-[var(--text-muted)] mb-4">Solve without looking at solutions. Open links when done.</p>
         <ol className="list-decimal list-inside space-y-4 flex-1">
-          {picked.map((q, i) => (
+          {picked.map((q) => (
             <li key={q.id} className="text-[var(--text)] font-medium">
               {q.title}
               {getTopicById(q.topicId) && (

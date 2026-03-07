@@ -3,5 +3,10 @@
     "id": "dsa",
     "name": "DSA",
     "order": 0
+  },
+  {
+    "id": "system-design",
+    "name": "System Design",
+    "order": 1
   }
 ]

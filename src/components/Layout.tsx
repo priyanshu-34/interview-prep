@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -7,6 +7,23 @@ import { useFirestoreWriteCheck } from '../hooks/useFirestoreWriteCheck';
 import { tracks } from '../data';
 import { isAdmin } from '../lib/admin';
 
+const NAV_PRIMARY = [
+  { to: '/', label: 'Dashboard' },
+  { to: '/cumulative', label: 'Cumulative' },
+  { to: '/revise', label: 'Revise' },
+  { to: '/pick-one', label: 'Pick one' },
+  { to: '/mock', label: 'Mock' },
+];
+
+function navMore(showAdmin: boolean) {
+  return [
+    { to: '/bookmarks', label: 'Bookmarks' },
+    { to: '/notes', label: 'Notes' },
+    { to: '/analytics', label: 'Analytics' },
+    ...(showAdmin ? [{ to: '/admin', label: 'Admin' }] : []),
+  ];
+}
+
 export function Layout() {
   const { theme, toggleTheme } = useTheme();
   const { user, loading: authLoading, signInWithGoogle, signInAnon, signOut } = useAuth();
@@ -14,19 +31,21 @@ export function Layout() {
   const { writeFailed, error } = useFirestoreWriteCheck();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dismissFirestoreBanner, setDismissFirestoreBanner] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
 
   const showAdmin = user && isAdmin(user.email ?? undefined);
-  const nav = [
-    { to: '/', label: 'Dashboard' },
-    { to: '/cumulative', label: 'Cumulative' },
-    { to: '/revise', label: 'Revise' },
-    { to: '/pick-one', label: 'Pick one' },
-    { to: '/mock', label: 'Mock' },
-    { to: '/bookmarks', label: 'Bookmarks' },
-    { to: '/notes', label: 'Notes' },
-    { to: '/analytics', label: 'Analytics' },
-    ...(showAdmin ? [{ to: '/admin', label: 'Admin' }] : []),
-  ];
+  const moreItems = navMore(showAdmin ?? false);
+  const nav = [...NAV_PRIMARY, ...moreItems];
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false);
+    }
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [moreOpen]);
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
@@ -56,13 +75,13 @@ export function Layout() {
         </div>
       )}
       <header className="sticky top-0 z-[100] w-full border-b border-[var(--border)] bg-[var(--bg)]/95 backdrop-blur safe-area-top shrink-0">
-        <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 h-14 flex flex-nowrap items-center justify-between gap-2 min-w-0">
-          <div className="flex flex-nowrap items-center gap-2 min-w-0 flex-1 overflow-hidden">
+        <div className="w-full px-4 sm:px-6 lg:px-8 h-14 flex flex-nowrap items-center justify-between gap-2 min-w-0">
+          <div className="flex flex-nowrap items-center gap-2 min-w-0 flex-1">
             <NavLink to="/" className="font-semibold text-lg text-[var(--text)] no-underline hover:no-underline hover:text-[var(--accent)] shrink-0 truncate" onClick={closeMobileMenu}>
               AlgoInterview
             </NavLink>
             <nav className="hidden md:flex items-center gap-1 shrink-0 flex-nowrap">
-              {nav.map(({ to, label }) => (
+              {NAV_PRIMARY.map(({ to, label }) => (
                 <NavLink
                   key={to}
                   to={to}
@@ -77,17 +96,69 @@ export function Layout() {
                   {label}
                 </NavLink>
               ))}
+              {/* Below xl: "More" dropdown so nav doesn't overlap theme/sign-out */}
+              <div className="relative xl:hidden shrink-0" ref={moreRef}>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setMoreOpen((o) => !o); }}
+                  className="px-3 py-2 rounded-md text-sm text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-card)] whitespace-nowrap"
+                  aria-expanded={moreOpen}
+                  aria-haspopup="true"
+                >
+                  More ▾
+                </button>
+                {moreOpen && (
+                  <div className="absolute top-full right-0 mt-1 py-1 min-w-[140px] rounded-md border border-[var(--border)] bg-[var(--bg)] shadow-lg z-10">
+                    {moreItems.map(({ to, label }) => (
+                      <NavLink
+                        key={to}
+                        to={to}
+                        onClick={() => setMoreOpen(false)}
+                        className={({ isActive }) =>
+                          `block px-3 py-2 text-sm no-underline whitespace-nowrap ${
+                            isActive
+                              ? 'bg-[var(--accent)]/20 text-[var(--accent)]'
+                              : 'text-[var(--text)] hover:bg-[var(--bg-card)]'
+                          }`
+                        }
+                      >
+                        {label}
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* xl and above: show all nav links (enough space to avoid overlap) */}
+              {moreItems.map(({ to, label }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className={({ isActive }) =>
+                    `hidden xl:block px-3 py-2 rounded-md text-sm no-underline whitespace-nowrap ${
+                      isActive
+                        ? 'bg-[var(--accent)]/20 text-[var(--accent)]'
+                        : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-card)]'
+                    }`
+                  }
+                >
+                  {label}
+                </NavLink>
+              ))}
             </nav>
             {tracks.length > 1 && (
-              <select
-                value={trackId}
-                onChange={(e) => setTrackId(e.target.value)}
-                className="hidden md:block bg-[var(--bg-card)] border border-[var(--border)] rounded-md px-2 py-1 text-sm text-[var(--text)] shrink-0"
-              >
-                {tracks.map((t) => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
-                ))}
-              </select>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="hidden sm:inline text-sm text-[var(--text-muted)]">Track</span>
+                <select
+                  value={trackId}
+                  onChange={(e) => setTrackId(e.target.value)}
+                  aria-label="Select track"
+                  className="bg-[var(--bg-card)] border border-[var(--border)] rounded-md px-2 py-1.5 text-sm text-[var(--text)] shrink-0 min-w-0 max-w-[180px]"
+                >
+                  {tracks.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
             )}
           </div>
           <div className="flex flex-nowrap items-center gap-1 sm:gap-2 shrink-0">

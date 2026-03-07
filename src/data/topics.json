@@ -106,5 +106,65 @@
     "trackId": "dsa",
     "name": "Strings",
     "order": 17
+  },
+  {
+    "id": "sd_topic_0_scalability",
+    "trackId": "system-design",
+    "name": "Scalability & Load Balancing",
+    "order": 0
+  },
+  {
+    "id": "sd_topic_1_caching",
+    "trackId": "system-design",
+    "name": "Caching",
+    "order": 1
+  },
+  {
+    "id": "sd_topic_2_databases",
+    "trackId": "system-design",
+    "name": "Databases",
+    "order": 2
+  },
+  {
+    "id": "sd_topic_3_messaging",
+    "trackId": "system-design",
+    "name": "Messaging & Event-Driven",
+    "order": 3
+  },
+  {
+    "id": "sd_topic_4_distributed",
+    "trackId": "system-design",
+    "name": "Distributed Systems",
+    "order": 4
+  },
+  {
+    "id": "sd_topic_5_api",
+    "trackId": "system-design",
+    "name": "API Design",
+    "order": 5
+  },
+  {
+    "id": "sd_topic_6_security",
+    "trackId": "system-design",
+    "name": "Security & Auth",
+    "order": 6
+  },
+  {
+    "id": "sd_topic_7_realtime",
+    "trackId": "system-design",
+    "name": "Real-time & Streaming",
+    "order": 7
+  },
+  {
+    "id": "sd_topic_8_storage",
+    "trackId": "system-design",
+    "name": "Storage",
+    "order": 8
+  },
+  {
+    "id": "sd_topic_9_design",
+    "trackId": "system-design",
+    "name": "Design Problems",
+    "order": 9
   }
 ]
