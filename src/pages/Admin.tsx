@@ -6,7 +6,14 @@ import { useQuestions } from '../contexts/QuestionsContext';
 import { tracks } from '../data';
 import { useTopics } from '../contexts/TopicsContext';
 import { isAdmin } from '../lib/admin';
-import { isOpenAIEnabled, DEFAULT_SYSTEM_PROMPT_DSA, DEFAULT_SYSTEM_PROMPT_SYSTEM_DESIGN } from '../lib/openai';
+import {
+  isOpenAIEnabled,
+  DEFAULT_SYSTEM_PROMPT_DSA,
+  DEFAULT_SYSTEM_PROMPT_SYSTEM_DESIGN,
+  DEFAULT_BULK_SYSTEM_PROMPT,
+  generateBulkSystemDesign,
+  type BulkSystemDesignPayload,
+} from '../lib/openai';
 import type { Question } from '../types';
 import questionsJson from '../data/questions.json';
 import { QuestionForm } from '../components/QuestionForm';
@@ -28,13 +35,15 @@ export function Admin() {
   const [importing, setImporting] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<'all' | 'published' | 'unpublished'>('all');
-  const [systemPrompts, setSystemPrompts] = useState<{ dsa: string; systemDesign: string }>({
+  const [systemPrompts, setSystemPrompts] = useState<{ dsa: string; systemDesign: string; bulkSystemDesign: string }>({
     dsa: DEFAULT_SYSTEM_PROMPT_DSA,
     systemDesign: DEFAULT_SYSTEM_PROMPT_SYSTEM_DESIGN,
+    bulkSystemDesign: DEFAULT_BULK_SYSTEM_PROMPT,
   });
   const [showPromptsModal, setShowPromptsModal] = useState(false);
   const [showAddTopicModal, setShowAddTopicModal] = useState(false);
-  const { getTopicsByTrack, getTopicById, addCustomTopic } = useTopics();
+  const [showBulkCreateModal, setShowBulkCreateModal] = useState(false);
+  const { getTopicsByTrack, getTopicById, addCustomTopic, refetchCustomTopics } = useTopics();
 
   useEffect(() => {
     const load = async () => {
@@ -45,6 +54,7 @@ export function Admin() {
           setSystemPrompts({
             dsa: typeof d.dsa === 'string' ? d.dsa : DEFAULT_SYSTEM_PROMPT_DSA,
             systemDesign: typeof d.systemDesign === 'string' ? d.systemDesign : DEFAULT_SYSTEM_PROMPT_SYSTEM_DESIGN,
+            bulkSystemDesign: typeof d.bulkSystemDesign === 'string' ? d.bulkSystemDesign : DEFAULT_BULK_SYSTEM_PROMPT,
           });
         }
       } catch {
@@ -198,6 +208,15 @@ export function Admin() {
         >
           Add topic
         </button>
+        {isOpenAIEnabled() && (
+          <button
+            type="button"
+            onClick={() => setShowBulkCreateModal(true)}
+            className="px-3 py-1.5 rounded border border-[var(--accent)] bg-[var(--accent)]/20 text-[var(--accent)] text-sm hover:bg-[var(--accent)]/30"
+          >
+            Bulk Create using AI
+          </button>
+        )}
       </div>
       <p className="text-sm text-[var(--text-muted)] mb-4">{filtered.length} questions</p>
       <div className="overflow-x-auto -mx-3 sm:mx-0 rounded-lg border border-[var(--border)]">
@@ -289,9 +308,10 @@ export function Admin() {
         <SystemPromptsModal
           initialDsa={systemPrompts.dsa}
           initialSystemDesign={systemPrompts.systemDesign}
+          initialBulkSystemDesign={systemPrompts.bulkSystemDesign}
           onClose={() => setShowPromptsModal(false)}
-          onSaved={(dsa, systemDesign) => {
-            setSystemPrompts({ dsa, systemDesign });
+          onSaved={(dsa, systemDesign, bulkSystemDesign) => {
+            setSystemPrompts({ dsa, systemDesign, bulkSystemDesign });
             setShowPromptsModal(false);
           }}
           onError={(msg) => setSaveError(msg)}
@@ -305,6 +325,20 @@ export function Admin() {
           addCustomTopic={addCustomTopic}
         />
       )}
+      {showBulkCreateModal && (
+        <BulkCreateModal
+          questions={questions}
+          getTopicsByTrack={getTopicsByTrack}
+          bulkSystemPrompt={systemPrompts.bulkSystemDesign || DEFAULT_BULK_SYSTEM_PROMPT}
+          onClose={() => setShowBulkCreateModal(false)}
+          onSaved={async () => {
+            await refetch();
+            await refetchCustomTopics();
+            setShowBulkCreateModal(false);
+          }}
+          onError={(msg) => setSaveError(msg)}
+        />
+      )}
       {unpublishingId && (
         <ConfirmUnpublish
           questionId={unpublishingId}
@@ -313,6 +347,227 @@ export function Admin() {
           onError={(msg) => { setSaveError(msg); setUnpublishingId(null); }}
         />
       )}
+    </div>
+  );
+}
+
+const CUSTOM_TOPICS_REF = 'customTopics';
+
+function slug(str: string): string {
+  return String(str)
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/[^a-z0-9_]/g, '')
+    .slice(0, 30);
+}
+
+interface BulkCreateModalProps {
+  questions: Question[];
+  getTopicsByTrack: (trackId: string) => { id: string; name: string }[];
+  bulkSystemPrompt: string;
+  onClose: () => void;
+  onSaved: () => void | Promise<void>;
+  onError: (msg: string) => void;
+}
+
+function BulkCreateModal({
+  questions,
+  getTopicsByTrack,
+  bulkSystemPrompt,
+  onClose,
+  onSaved,
+  onError,
+}: BulkCreateModalProps) {
+  const [jsonText, setJsonText] = useState<string | null>(null);
+  const [userPrompt, setUserPrompt] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  const handleGenerate = async () => {
+    setLocalError(null);
+    setGenerating(true);
+    try {
+      const sdTopics = getTopicsByTrack('system-design');
+      const sdQuestions = questions.filter((q) => q.trackId === 'system-design');
+      const existingTopicsWithQuestions = sdTopics.map((t) => ({
+        topicName: t.name,
+        questionTitles: sdQuestions.filter((q) => q.topicId === t.id).map((q) => q.title),
+      }));
+      const payload = await generateBulkSystemDesign(existingTopicsWithQuestions, {
+        userPrompt: userPrompt.trim() || undefined,
+        systemPrompt: bulkSystemPrompt?.trim() || undefined,
+      });
+      setJsonText(JSON.stringify(payload, null, 2));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Generation failed';
+      setLocalError(msg);
+      onError(msg);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleConfirmAndAdd = async () => {
+    if (!jsonText?.trim()) {
+      onError('Generate content first or paste JSON');
+      return;
+    }
+    setLocalError(null);
+    setSaving(true);
+    try {
+      let payload: BulkSystemDesignPayload;
+      try {
+        payload = JSON.parse(jsonText) as BulkSystemDesignPayload;
+      } catch {
+        onError('Invalid JSON. Fix the syntax and try again.');
+        setSaving(false);
+        return;
+      }
+      if (!Array.isArray(payload.topics) || !Array.isArray(payload.questions)) {
+        onError('JSON must have "topics" and "questions" arrays.');
+        setSaving(false);
+        return;
+      }
+      const existingSdTopics = getTopicsByTrack('system-design');
+      const existingTopicNames = new Set(existingSdTopics.map((t) => t.name));
+      const newTopicNames = new Set(payload.topics.map((t) => t.name.trim()).filter(Boolean));
+      const validTopicNames = new Set([...existingTopicNames, ...newTopicNames]);
+      for (const q of payload.questions) {
+        if (!q.topicName?.trim() || !q.title?.trim()) continue;
+        if (!validTopicNames.has(q.topicName.trim())) {
+          onError(`Question "${q.title}" references unknown topic "${q.topicName}". Use an existing topic name or add it to "topics".`);
+          setSaving(false);
+          return;
+        }
+      }
+
+      const batchId = Date.now();
+      const nameToId = new Map<string, string>();
+      existingSdTopics.forEach((t) => nameToId.set(t.name, t.id));
+
+      const customSnap = await getDoc(doc(db, 'config', CUSTOM_TOPICS_REF));
+      const existingCustomTopics: { id: string; trackId: string; name: string; order: number }[] = customSnap.exists() && Array.isArray(customSnap.data()?.topics)
+        ? (customSnap.data().topics as { id: string; trackId: string; name: string; order: number }[])
+        : [];
+      const maxOrder = existingCustomTopics.length
+        ? Math.max(...existingCustomTopics.map((t) => t.order), 0)
+        : 0;
+      const newTopics: { id: string; trackId: string; name: string; order: number }[] = payload.topics
+        .filter((t) => t.name?.trim())
+        .map((t, i) => ({
+          id: `custom_sd_${batchId}_${i}_${slug(t.name)}`,
+          trackId: 'system-design',
+          name: t.name.trim(),
+          order: maxOrder + 1 + i,
+        }));
+      if (newTopics.length > 0) {
+        const updatedTopics = [...existingCustomTopics, ...newTopics];
+        await setDoc(doc(db, 'config', CUSTOM_TOPICS_REF), { topics: updatedTopics });
+      }
+      newTopics.forEach((t) => nameToId.set(t.name, t.id));
+      const toWrite = payload.questions.filter((q) => q.topicName?.trim() && q.title?.trim());
+      for (let j = 0; j < toWrite.length; j++) {
+        const q = toWrite[j];
+        const topicId = nameToId.get(q.topicName!.trim());
+        if (!topicId) continue;
+        const questionId = `${topicId}_${batchId}_${j}_${slug(q.title)}`;
+        const docData: Record<string, unknown> = {
+          id: questionId,
+          trackId: 'system-design',
+          topicId,
+          title: q.title.trim(),
+          difficulty: q.difficulty === 'easy' || q.difficulty === 'medium' || q.difficulty === 'hard' ? q.difficulty : null,
+          gfgLink: '',
+          leetcodeLink: '',
+          youtubeLink: '',
+          order: typeof q.order === 'number' ? q.order : j,
+          public: false,
+        };
+        if (q.description != null) docData.description = q.description;
+        if (q.explanation != null) docData.explanation = q.explanation;
+        if (Array.isArray(q.links) && q.links.length) docData.links = q.links;
+        await setDoc(doc(db, 'questions', questionDocId(questionId)), docData);
+      }
+
+      await onSaved();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Save failed';
+      setLocalError(msg);
+      onError(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg)] max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <h2 className="text-lg font-semibold text-[var(--text)] p-4 border-b border-[var(--border)]">
+          Bulk Create using AI (System Design)
+        </h2>
+        <p className="text-sm text-[var(--text-muted)] px-4 pb-2">
+          AI can add new questions to existing topics and/or create new topics with questions. Optional user prompt guides the model (e.g. &quot;Focus on caching&quot;). Review and edit the JSON below, then click Confirm and add to save.
+        </p>
+        {localError && (
+          <p className="mx-4 mb-2 p-2 rounded border border-red-500/50 bg-red-500/10 text-red-400 text-sm">{localError}</p>
+        )}
+        <div className="flex-1 overflow-auto px-4 pb-4">
+          {jsonText == null ? (
+            <div className="space-y-4 py-4">
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">User prompt (optional)</label>
+                <textarea
+                  value={userPrompt}
+                  onChange={(e) => setUserPrompt(e.target.value)}
+                  rows={3}
+                  placeholder="e.g. Focus on distributed caching and add 3 questions per topic"
+                  className="w-full rounded border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text)] resize-y"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleGenerate}
+                disabled={generating}
+                className="px-4 py-2 rounded bg-[var(--accent)] text-white hover:opacity-90 disabled:opacity-50"
+              >
+                {generating ? 'Generating…' : 'Generate topics & questions'}
+              </button>
+            </div>
+          ) : (
+            <>
+              <textarea
+                value={jsonText}
+                onChange={(e) => setJsonText(e.target.value)}
+                rows={20}
+                className="w-full rounded border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text)] font-mono resize-y"
+                placeholder='{ "topics": [...], "questions": [...] }'
+              />
+              <div className="flex gap-2 mt-3">
+                <button
+                  type="button"
+                  onClick={handleConfirmAndAdd}
+                  disabled={saving}
+                  className="px-4 py-2 rounded bg-[var(--accent)] text-white hover:opacity-90 disabled:opacity-50"
+                >
+                  {saving ? 'Saving…' : 'Confirm and add'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setJsonText(null); }}
+                  disabled={generating}
+                  className="px-4 py-2 rounded border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg-card)] disabled:opacity-50"
+                >
+                  Generate again
+                </button>
+                <button type="button" onClick={onClose} className="px-4 py-2 rounded border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg-card)]">
+                  Cancel
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -406,28 +661,31 @@ function AddTopicModal({ onClose, onSaved, onError, addCustomTopic }: AddTopicMo
 interface SystemPromptsModalProps {
   initialDsa: string;
   initialSystemDesign: string;
+  initialBulkSystemDesign: string;
   onClose: () => void;
-  onSaved: (dsa: string, systemDesign: string) => void;
+  onSaved: (dsa: string, systemDesign: string, bulkSystemDesign: string) => void;
   onError: (msg: string) => void;
 }
 
 function SystemPromptsModal({
   initialDsa,
   initialSystemDesign,
+  initialBulkSystemDesign,
   onClose,
   onSaved,
   onError,
 }: SystemPromptsModalProps) {
   const [dsa, setDsa] = useState(initialDsa);
   const [systemDesign, setSystemDesign] = useState(initialSystemDesign);
+  const [bulkSystemDesign, setBulkSystemDesign] = useState(initialBulkSystemDesign);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
     onError('');
     try {
-      await setDoc(doc(db, 'config', CONFIG_PROMPTS_REF), { dsa, systemDesign });
-      onSaved(dsa, systemDesign);
+      await setDoc(doc(db, 'config', CONFIG_PROMPTS_REF), { dsa, systemDesign, bulkSystemDesign });
+      onSaved(dsa, systemDesign, bulkSystemDesign);
     } catch (err) {
       onError(err instanceof Error ? err.message : 'Failed to save prompts');
     } finally {
@@ -440,7 +698,7 @@ function SystemPromptsModal({
       <div className="rounded-xl border border-[var(--border)] bg-[var(--bg)] max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
         <h2 className="text-lg font-semibold text-[var(--text)] mb-4">Edit system prompts (AI)</h2>
         <p className="text-sm text-[var(--text-muted)] mb-4">
-          These prompts are sent to the model when you use &quot;Generate with AI&quot;. DSA is used for the DSA track; System Design for the System Design track.
+          DSA and System Design prompts are used for &quot;Generate with AI&quot; on a single question. Bulk Create prompt is used for &quot;Bulk Create using AI&quot;.
         </p>
         <div className="space-y-4">
           <div>
@@ -461,6 +719,16 @@ function SystemPromptsModal({
               rows={12}
               className="w-full rounded border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text)] font-mono resize-y"
               placeholder="System prompt for System Design..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Bulk Create (System Design) system prompt</label>
+            <textarea
+              value={bulkSystemDesign}
+              onChange={(e) => setBulkSystemDesign(e.target.value)}
+              rows={12}
+              className="w-full rounded border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text)] font-mono resize-y"
+              placeholder="System prompt for Bulk Create..."
             />
           </div>
         </div>

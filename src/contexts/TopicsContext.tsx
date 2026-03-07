@@ -19,6 +19,7 @@ interface TopicsContextValue {
   getTopicById: (id: string) => Topic | undefined;
   getTopicsByTrack: (trackId: string) => Topic[];
   addCustomTopic: (topic: Omit<Topic, 'id'>) => Promise<void>;
+  refetchCustomTopics: () => Promise<void>;
   isLoading: boolean;
 }
 
@@ -69,15 +70,28 @@ export function TopicsProvider({ children }: { children: React.ReactNode }) {
     setCustomTopics(updated);
   }, [customTopics]);
 
+  const refetchCustomTopics = useCallback(async () => {
+    try {
+      const snap = await getDoc(doc(db, 'config', CUSTOM_TOPICS_REF));
+      if (snap.exists() && snap.data()?.topics) {
+        const list = snap.data().topics as Topic[];
+        setCustomTopics(Array.isArray(list) ? list : []);
+      }
+    } catch {
+      setCustomTopics([]);
+    }
+  }, []);
+
   const value = useMemo(
     () => ({
       customTopics,
       getTopicById,
       getTopicsByTrack,
       addCustomTopic,
+      refetchCustomTopics,
       isLoading,
     }),
-    [customTopics, getTopicById, getTopicsByTrack, addCustomTopic, isLoading]
+    [customTopics, getTopicById, getTopicsByTrack, addCustomTopic, refetchCustomTopics, isLoading]
   );
 
   return <TopicsContext.Provider value={value}>{children}</TopicsContext.Provider>;
@@ -91,6 +105,7 @@ export function useTopics(): TopicsContextValue {
       getTopicById: getStaticTopicById,
       getTopicsByTrack: getStaticTopicsByTrack,
       addCustomTopic: async () => {},
+      refetchCustomTopics: async () => {},
       isLoading: false,
     };
   }
