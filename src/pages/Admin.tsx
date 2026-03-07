@@ -43,6 +43,7 @@ export function Admin() {
   const [showPromptsModal, setShowPromptsModal] = useState(false);
   const [showAddTopicModal, setShowAddTopicModal] = useState(false);
   const [showBulkCreateModal, setShowBulkCreateModal] = useState(false);
+  const [showScriptModal, setShowScriptModal] = useState(false);
   const { getTopicsByTrack, getTopicById, addCustomTopic, refetchCustomTopics } = useTopics();
 
   useEffect(() => {
@@ -217,6 +218,13 @@ export function Admin() {
             Bulk Create using AI
           </button>
         )}
+        <button
+          type="button"
+          onClick={() => setShowScriptModal(true)}
+          className="px-3 py-1.5 rounded border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text)] text-sm hover:bg-[var(--border)]"
+        >
+          Run script
+        </button>
       </div>
       <p className="text-sm text-[var(--text-muted)] mb-4">{filtered.length} questions</p>
       <div className="overflow-x-auto -mx-3 sm:mx-0 rounded-lg border border-[var(--border)]">
@@ -339,6 +347,13 @@ export function Admin() {
           onError={(msg) => setSaveError(msg)}
         />
       )}
+      {showScriptModal && (
+        <ScriptRunnerModal
+          questions={questions}
+          getTopicsByTrack={getTopicsByTrack}
+          onClose={() => setShowScriptModal(false)}
+        />
+      )}
       {unpublishingId && (
         <ConfirmUnpublish
           questionId={unpublishingId}
@@ -359,6 +374,99 @@ function slug(str: string): string {
     .replace(/\s+/g, '_')
     .replace(/[^a-z0-9_]/g, '')
     .slice(0, 30);
+}
+
+interface ScriptRunnerModalProps {
+  questions: Question[];
+  getTopicsByTrack: (trackId: string) => { id: string; trackId: string; name: string; order: number }[];
+  onClose: () => void;
+}
+
+function ScriptRunnerModal({ questions, getTopicsByTrack, onClose }: ScriptRunnerModalProps) {
+  const [scriptText, setScriptText] = useState('');
+  const [outputLines, setOutputLines] = useState<string[]>([]);
+  const [returnValue, setReturnValue] = useState<unknown>(undefined);
+  const [error, setError] = useState<string | null>(null);
+  const [running, setRunning] = useState(false);
+
+  const handleRun = () => {
+    setError(null);
+    setOutputLines([]);
+    setReturnValue(undefined);
+    setRunning(true);
+    try {
+      const topics = tracks.flatMap((t) => getTopicsByTrack(t.id));
+      const data = { topics, questions };
+      const lines: string[] = [];
+      const log = (msg: unknown) => lines.push(typeof msg === 'string' ? msg : JSON.stringify(msg, null, 2));
+      const fn = new Function(
+        'data',
+        'log',
+        `"use strict";\n${scriptText}`
+      ) as (data: typeof data, log: (msg: unknown) => void) => unknown;
+      const result = fn(data, log);
+      setOutputLines(lines);
+      setReturnValue(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg)] max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <h2 className="text-lg font-semibold text-[var(--text)] p-4 border-b border-[var(--border)]">
+          Run script
+        </h2>
+        <p className="text-sm text-[var(--text-muted)] px-4 pb-2">
+          Paste a script that receives <code className="bg-[var(--bg-card)] px-1 rounded">data</code> (&#123; topics, questions &#125;) and <code className="bg-[var(--bg-card)] px-1 rounded">log(msg)</code>. Use <code className="bg-[var(--bg-card)] px-1 rounded">log(...)</code> to print; return value is shown below. Read-only: changes in the script do not save to the DB.
+        </p>
+        <div className="flex-1 overflow-auto px-4 pb-4 space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Script</label>
+            <textarea
+              value={scriptText}
+              onChange={(e) => setScriptText(e.target.value)}
+              rows={12}
+              placeholder={'const { topics, questions } = data;\nlog(`Topics: ${topics.length}, Questions: ${questions.length}`);\nreturn { topics: topics.length, questions: questions.length };'}
+              className="w-full rounded border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text)] font-mono resize-y"
+              spellCheck={false}
+            />
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleRun}
+              disabled={running || !scriptText.trim()}
+              className="px-4 py-2 rounded bg-[var(--accent)] text-white hover:opacity-90 disabled:opacity-50"
+            >
+              {running ? 'Running…' : 'Run'}
+            </button>
+            <button type="button" onClick={onClose} className="px-4 py-2 rounded border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg-card)]">
+              Close
+            </button>
+          </div>
+          {(outputLines.length > 0 || returnValue !== undefined || error) && (
+            <div>
+              <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Output</label>
+              <pre className="rounded border border-[var(--border)] bg-[var(--bg-card)] p-3 text-sm text-[var(--text)] overflow-auto max-h-64 whitespace-pre-wrap break-words">
+                {error && <span className="text-red-400">{error}</span>}
+                {error && outputLines.length > 0 && '\n'}
+                {outputLines.length > 0 && outputLines.join('\n')}
+                {returnValue !== undefined && (
+                  <span className="block mt-2 text-[var(--accent)]">
+                    Return: {typeof returnValue === 'string' ? returnValue : JSON.stringify(returnValue, null, 2)}
+                  </span>
+                )}
+              </pre>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 interface BulkCreateModalProps {
