@@ -58,7 +58,7 @@ export function Admin() {
         const chunk = list.slice(i, i + BATCH_SIZE);
         for (const q of chunk) {
           const ref = doc(db, 'questions', questionDocId(q.id));
-          batch.set(ref, {
+          const data: Record<string, unknown> = {
             id: q.id,
             trackId: q.trackId,
             topicId: q.topicId,
@@ -69,7 +69,11 @@ export function Admin() {
             youtubeLink: q.youtubeLink ?? '',
             order: q.order,
             public: true,
-          });
+          };
+          if (q.description != null) data.description = q.description;
+          if (q.explanation != null) data.explanation = q.explanation;
+          if (Array.isArray(q.links) && q.links.length > 0) data.links = q.links;
+          batch.set(ref, data);
         }
         await batch.commit();
       }
@@ -268,11 +272,17 @@ function QuestionForm({ question, onClose, onSaved, onError }: QuestionFormProps
   const [topicId, setTopicId] = useState(question?.topicId ?? '');
   const [title, setTitle] = useState(question?.title ?? '');
   const [difficulty, setDifficulty] = useState<string>(question?.difficulty ?? '');
+  const [description, setDescription] = useState(question?.description ?? '');
+  const [explanation, setExplanation] = useState(question?.explanation ?? '');
   const [gfgLink, setGfgLink] = useState(question?.gfgLink ?? '');
   const [leetcodeLink, setLeetcodeLink] = useState(question?.leetcodeLink ?? '');
   const [youtubeLink, setYoutubeLink] = useState(question?.youtubeLink ?? '');
+  const [links, setLinks] = useState<{ label: string; url: string }[]>(
+    question?.links?.length ? [...question.links] : [{ label: '', url: '' }]
+  );
   const [order, setOrder] = useState(question?.order ?? 0);
   const [saving, setSaving] = useState(false);
+  const isSystemDesign = trackId === 'system-design';
 
   const topicsForTrack = useMemo(() => getTopicsByTrack(trackId), [trackId]);
 
@@ -293,9 +303,14 @@ function QuestionForm({ question, onClose, onSaved, onError }: QuestionFormProps
         setSaving(false);
         return;
       }
-      const id = isEdit ? question!.id : `dsa_${resolvedTopicId}_${Date.now()}_${slug(title)}`;
+      const id = isEdit
+        ? question!.id
+        : (trackId === 'system-design'
+          ? `${resolvedTopicId}_${Date.now()}_${slug(title)}`
+          : `dsa_${resolvedTopicId}_${Date.now()}_${slug(title)}`);
       const ref = doc(db, 'questions', questionDocId(id));
-      const payload = {
+      const linksFiltered = links.filter((l) => l.url.trim() !== '');
+      const payload: Record<string, unknown> = {
         id,
         trackId,
         topicId: resolvedTopicId,
@@ -306,6 +321,9 @@ function QuestionForm({ question, onClose, onSaved, onError }: QuestionFormProps
         youtubeLink: youtubeLink.trim(),
         order: Number(order) || 0,
       };
+      if (description.trim()) payload.description = description.trim();
+      if (explanation.trim()) payload.explanation = explanation.trim();
+      if (linksFiltered.length > 0) payload.links = linksFiltered.map((l) => ({ label: l.label.trim() || 'Resource', url: l.url.trim() }));
       await setDoc(ref, isEdit ? payload : { ...payload, public: true }, { merge: true });
       onSaved();
     } catch (err: unknown) {
@@ -378,6 +396,77 @@ function QuestionForm({ question, onClose, onSaved, onError }: QuestionFormProps
               onChange={(e) => setOrder(Number(e.target.value) || 0)}
               className="w-full rounded border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-[var(--text)]"
             />
+          </div>
+          <div>
+            <label className="block text-sm text-[var(--text-muted)] mb-1">Description (problem/study text)</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              placeholder="Optional: problem statement or study description"
+              className="w-full rounded border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-[var(--text)] resize-y"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-[var(--text-muted)] mb-1">Explanation</label>
+            <textarea
+              value={explanation}
+              onChange={(e) => setExplanation(e.target.value)}
+              rows={3}
+              placeholder="Optional: solution overview or explanation"
+              className="w-full rounded border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-[var(--text)] resize-y"
+            />
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-sm text-[var(--text-muted)]">Resources (links array)</label>
+              <button
+                type="button"
+                onClick={() => setLinks((prev) => [...prev, { label: '', url: '' }])}
+                className="text-xs text-[var(--accent)] hover:underline"
+              >
+                + Add link
+              </button>
+            </div>
+            <p className="text-xs text-[var(--text-muted)] mb-2">
+              {isSystemDesign ? 'For system design, these are shown as Article/Video links. Leave URL empty to skip.' : 'Optional: list of resources (label + URL).'}
+            </p>
+            <div className="space-y-2">
+              {links.map((item, i) => (
+                <div key={i} className="flex gap-2 items-start">
+                  <input
+                    type="text"
+                    value={item.label}
+                    onChange={(e) => {
+                      const next = [...links];
+                      next[i] = { ...next[i], label: e.target.value };
+                      setLinks(next);
+                    }}
+                    placeholder="Label (e.g. Article, Video)"
+                    className="flex-1 min-w-0 rounded border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text)]"
+                  />
+                  <input
+                    type="url"
+                    value={item.url}
+                    onChange={(e) => {
+                      const next = [...links];
+                      next[i] = { ...next[i], url: e.target.value };
+                      setLinks(next);
+                    }}
+                    placeholder="URL"
+                    className="flex-[2] min-w-0 rounded border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text)]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setLinks((prev) => prev.filter((_, j) => j !== i))}
+                    className="p-2 rounded border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-card)] shrink-0"
+                    aria-label="Remove link"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
           <div>
             <label className="block text-sm text-[var(--text-muted)] mb-1">LeetCode link</label>

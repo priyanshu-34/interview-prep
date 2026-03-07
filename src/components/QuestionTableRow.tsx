@@ -1,7 +1,7 @@
 import type { Question } from '../types';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LeetCodeIcon, GFGIcon, YouTubeIcon, CheckCircleIcon, NotesIcon } from './Icons';
+import { LeetCodeIcon, GFGIcon, YouTubeIcon, CheckCircleIcon, NotesIcon, ExternalLinkIcon } from './Icons';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useActivity } from '../hooks/useActivity';
 import { usePrefs } from '../hooks/usePrefs';
@@ -96,44 +96,62 @@ export function QuestionTableRow({ q, showTopic, topicName, colSpan }: QuestionT
         </td>
         <td className="p-3">
           <div className="flex flex-wrap items-center gap-1.5">
-            {q.leetcodeLink && (
-              <a
-                href={q.leetcodeLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-1.5 rounded bg-amber-600/20 text-amber-400 hover:bg-amber-600/30"
-                title="LeetCode"
-                aria-label="Open on LeetCode"
-              >
-                <LeetCodeIcon className="w-4 h-4" />
-              </a>
-            )}
-            {q.gfgLink && (
-              <a
-                href={q.gfgLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-1.5 rounded bg-green-700/20 text-green-400 hover:bg-green-700/30"
-                title="GeeksForGeeks"
-                aria-label="Open on GFG"
-              >
-                <GFGIcon className="w-4 h-4" />
-              </a>
-            )}
-            {q.youtubeLink && (
-              <a
-                href={q.youtubeLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-1.5 rounded bg-red-600/20 text-red-400 hover:bg-red-600/30"
-                title="YouTube"
-                aria-label="Open on YouTube"
-              >
-                <YouTubeIcon className="w-4 h-4" />
-              </a>
-            )}
-            {!q.leetcodeLink && !q.gfgLink && !q.youtubeLink && (
-              <span className="text-[var(--text-muted)] text-xs">—</span>
+            {q.links && q.links.length > 0 ? (
+              q.links.slice(0, 5).map((item, i) => (
+                <a
+                  key={i}
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 rounded bg-[var(--accent)]/20 text-[var(--accent)] hover:bg-[var(--accent)]/30"
+                  title={item.label || `Resource ${i + 1}`}
+                  aria-label={item.label || `Open resource ${i + 1}`}
+                >
+                  <ExternalLinkIcon className="w-4 h-4" />
+                </a>
+              ))
+            ) : (
+              <>
+                {q.leetcodeLink && (
+                  <a
+                    href={q.leetcodeLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1.5 rounded bg-amber-600/20 text-amber-400 hover:bg-amber-600/30"
+                    title="LeetCode"
+                    aria-label="Open on LeetCode"
+                  >
+                    <LeetCodeIcon className="w-4 h-4" />
+                  </a>
+                )}
+                {q.gfgLink && (
+                  <a
+                    href={q.gfgLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1.5 rounded bg-green-700/20 text-green-400 hover:bg-green-700/30"
+                    title="GeeksForGeeks"
+                    aria-label="Open on GFG"
+                  >
+                    <GFGIcon className="w-4 h-4" />
+                  </a>
+                )}
+                {q.youtubeLink && (
+                  <a
+                    href={q.youtubeLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1.5 rounded bg-red-600/20 text-red-400 hover:bg-red-600/30"
+                    title="YouTube"
+                    aria-label="Open on YouTube"
+                  >
+                    <YouTubeIcon className="w-4 h-4" />
+                  </a>
+                )}
+                {!q.leetcodeLink && !q.gfgLink && !q.youtubeLink && (
+                  <span className="text-[var(--text-muted)] text-xs">—</span>
+                )}
+              </>
             )}
           </div>
         </td>

@@ -16,6 +16,7 @@ import { MockInterview } from './pages/MockInterview';
 import { Notes } from './pages/Notes';
 import { Analytics } from './pages/Analytics';
 import { Admin } from './pages/Admin';
+import { QuestionDetail } from './pages/QuestionDetail';
 import { useAuth } from './contexts/AuthContext';
 import { isAdmin } from './lib/admin';
 
@@ -39,6 +40,7 @@ function App() {
                     <Route path="/" element={<Layout />}>
                       <Route index element={<Dashboard />} />
                       <Route path="topic/:topicId" element={<TopicDetail />} />
+                      <Route path="question/:questionId" element={<QuestionDetail />} />
                       <Route path="cumulative" element={<Cumulative />} />
                       <Route path="bookmarks" element={<Bookmarks />} />
                       <Route path="revise" element={<Revise />} />

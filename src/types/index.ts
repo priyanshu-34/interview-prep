@@ -25,6 +25,12 @@ export interface Question {
   order: number;
   /** If false, question is hidden from app (unpublished). Omitted or true = published. */
   public?: boolean;
+  /** Optional problem/study description (e.g. for system design). */
+  description?: string;
+  /** Optional explanation or solution overview (e.g. for system design). */
+  explanation?: string;
+  /** Optional array of resources (articles, videos, etc.). When set, used instead of gfgLink/leetcodeLink/youtubeLink for display. */
+  links?: { label: string; url: string }[];
 }
 
 export interface ActivityDay {

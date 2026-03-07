@@ -5019,12 +5019,36 @@
     "id": "sd_topic_0_scalability_0_load_balancing",
     "trackId": "system-design",
     "topicId": "sd_topic_0_scalability",
-    "title": "Load Balancing (Round-Robin, Least Connections)",
+    "title": "Load Balancing (Round Robin, Least Connections)",
     "difficulty": "medium",
-    "gfgLink": "",
+    "description": "Load balancing distributes incoming requests across multiple servers to improve scalability, availability, and system reliability. It prevents any single server from becoming a bottleneck and allows systems to handle large traffic efficiently.",
+    "explanation": "Load balancing is a fundamental concept in scalable distributed systems. Instead of sending all incoming requests to a single server, a load balancer distributes traffic across multiple backend servers. This improves system availability, reduces latency, and allows horizontal scaling.\n\nWhen traffic increases, new servers can be added behind the load balancer without affecting clients. If one server fails, the load balancer automatically redirects traffic to healthy servers.\n\n---\n\n1. Why Load Balancing is Needed\n\nWithout load balancing:\n- A single server becomes a bottleneck\n- Server crashes can cause system downtime\n- Scaling becomes difficult\n\nWith load balancing:\n- Traffic is distributed across multiple servers\n- Systems scale horizontally\n- Fault tolerance improves\n- System latency decreases\n\nExample:\nA popular website receives 100,000 requests per second. Instead of one machine handling all requests, a load balancer distributes traffic across 100 servers.\n\n---\n\n2. Load Balancing Algorithms\n\nDifferent algorithms determine how traffic is distributed.\n\nRound Robin\nRequests are sent sequentially to each server.\nExample:\nServer A -> Server B -> Server C -> Server A -> Server B\n\nAdvantages:\n- Very simple\n- Works well when servers have equal capacity\n\nDisadvantages:\n- Does not consider server load\n\nWeighted Round Robin\nServers are assigned weights based on capacity.\nStronger machines receive more requests.\n\nLeast Connections\nThe load balancer sends traffic to the server currently handling the fewest active connections.\n\nAdvantages:\n- Better for long-lived connections\n- Automatically adapts to server load\n\nDisadvantages:\n- Requires tracking active connections\n\nIP Hash\nRequests from the same client IP always go to the same server.\nThis is useful for maintaining session consistency.\n\n---\n\n3. Layer 4 vs Layer 7 Load Balancing\n\nLayer 4 Load Balancing (Transport Layer)\nOperates at TCP/UDP level.\nRouting decisions are made using:\n- IP address\n- Port\n\nAdvantages:\n- Faster\n- Lower latency\n- Simple implementation\n\nExample tools:\n- AWS Network Load Balancer\n- HAProxy\n\nLayer 7 Load Balancing (Application Layer)\nUnderstands HTTP/HTTPS requests and can route based on:\n- URL path\n- HTTP headers\n- Cookies\n- Request type\n\nExample:\n/api/users -> Service A\n/api/orders -> Service B\n\nAdvantages:\n- Advanced routing\n- API gateway style routing\n\nExample tools:\n- Nginx\n- AWS Application Load Balancer\n- Envoy\n\n---\n\n4. Health Checks\n\nLoad balancers periodically check if backend servers are healthy.\nIf a server fails health checks, it is removed from rotation.\n\nHealth checks may include:\n- HTTP endpoint check (/health)\n- TCP connection test\n- heartbeat signals\n\nThis ensures requests are never sent to unhealthy servers.\n\n---\n\n5. Sticky Sessions (Session Affinity)\n\nSome applications store session data in server memory.\nIn such cases, requests from the same user must go to the same server.\n\nThis is called sticky sessions.\n\nHowever, modern architectures prefer **stateless services** and store sessions in shared stores like:\n\n- Redis\n- Databases\n- Distributed caches\n\nThis avoids dependency on a specific server.\n\n---\n\n6. Types of Load Balancers\n\nHardware Load Balancers\nUsed in traditional data centers.\nExamples:\n- F5 BIG-IP\n\nSoftware Load Balancers\nMore flexible and commonly used in cloud environments.\nExamples:\n- Nginx\n- HAProxy\n- Envoy\n\nCloud Load Balancers\nManaged by cloud providers.\nExamples:\n- AWS Elastic Load Balancer\n- Google Cloud Load Balancer\n- Azure Load Balancer\n\n---\n\n7. Load Balancing in Modern Architectures\n\nLoad balancers are used in many layers of modern systems:\n\nClient -> CDN -> Load Balancer -> API servers -> Databases\n\nExamples:\n\nWeb applications\nLoad balancer distributes requests across application servers.\n\nMicroservices\nAPI Gateway acts as a load balancer for microservices.\n\nKubernetes\nServices use built-in load balancing to distribute traffic across pods.\n\n---\n\n8. Interview Tips\n\nInterviewers expect you to mention:\n\n- Horizontal scaling\n- Health checks\n- Sticky sessions\n- L4 vs L7 load balancing\n- Load balancing algorithms\n\nExample interview answer:\n\n\"To scale the system, I would place a load balancer in front of multiple application servers. The load balancer distributes incoming requests using algorithms like round robin or least connections. Health checks ensure traffic is only sent to healthy servers. For session management I would avoid sticky sessions and instead store session state in Redis to keep the system stateless.\"",
+    "gfgLink": "https://www.geeksforgeeks.org/system-design/load-balancing-system-design/",
     "leetcodeLink": "",
-    "youtubeLink": "",
-    "order": 0
+    "youtubeLink": "https://www.youtube.com/watch?v=K0Ta65OqQkY",
+    "order": 0,
+    "links": [
+      {
+        "label": "Cloudflare - Load Balancing Algorithms",
+        "url": "https://www.cloudflare.com/learning/performance/types-of-load-balancing-algorithms/"
+      },
+      {
+        "label": "GeeksforGeeks - Load Balancing in System Design",
+        "url": "https://www.geeksforgeeks.org/system-design/load-balancing-system-design/"
+      },
+      {
+        "label": "AWS - Elastic Load Balancing",
+        "url": "https://aws.amazon.com/elasticloadbalancing/"
+      },
+      {
+        "label": "NGINX Load Balancing Guide",
+        "url": "https://docs.nginx.com/nginx/admin-guide/load-balancer/http-load-balancer/"
+      },
+      {
+        "label": "Wikipedia - Load Balancing",
+        "url": "https://en.wikipedia.org/wiki/Load_balancing_(computing)"
+      }
+    ]
   },
   {
     "id": "sd_topic_0_scalability_1_consistent_hashing",
@@ -5032,65 +5056,189 @@
     "topicId": "sd_topic_0_scalability",
     "title": "Consistent Hashing",
     "difficulty": "medium",
-    "gfgLink": "",
+    "description": "Consistent hashing is a technique used in distributed systems to distribute data across multiple servers in a way that minimizes data movement when servers are added or removed.",
+    "explanation": "Consistent hashing is a technique used to distribute data across multiple servers in distributed systems while minimizing the amount of data that needs to be moved when the system scales.\n\nIn traditional hashing, data is distributed using a formula such as:\n\nhash(key) % number_of_servers\n\nThe problem with this approach is that when the number of servers changes (for example adding a new server), almost all keys need to be remapped to new servers. This causes massive data reshuffling, which is expensive in large distributed systems.\n\nConsistent hashing solves this problem by organizing servers and keys on a virtual circular structure called a \"hash ring\".\n\n---\n\n1. Hash Ring Concept\n\nIn consistent hashing, both servers and keys are hashed onto the same circular hash space.\n\nExample:\n\nHash range: 0 → 2^32\n\nServers are placed on the ring based on their hash values.\n\nWhen storing a key:\n1. Hash the key\n2. Move clockwise on the ring\n3. The first server encountered stores the key\n\nExample:\n\nServer A → position 20\nServer B → position 50\nServer C → position 80\n\nKey hashed to position 45 → stored on Server B.\n\n---\n\n2. What Happens When a Server Is Added\n\nSuppose a new server is added between Server A and Server B.\n\nOnly the keys in that region of the ring move to the new server.\n\nThis means:\n\nOnly a small fraction of data needs to be redistributed.\n\nThis property makes consistent hashing extremely useful for distributed systems that frequently scale.\n\n---\n\n3. Virtual Nodes\n\nA major problem with simple consistent hashing is uneven load distribution.\n\nSome servers may receive more keys than others.\n\nTo fix this, systems use **virtual nodes (vnodes)**.\n\nEach physical server is represented by multiple virtual nodes on the hash ring.\n\nExample:\n\nServer A → vnode1, vnode2, vnode3\nServer B → vnode4, vnode5, vnode6\n\nBenefits:\n\n- Better load balancing\n- Easier scaling\n- Faster rebalancing when servers are added or removed\n\nMost real systems use **hundreds of virtual nodes per server**.\n\n---\n\n4. Why Consistent Hashing Is Important\n\nConsistent hashing is critical for systems that need to scale horizontally.\n\nBenefits:\n\n- Minimal data movement during scaling\n- Automatic load distribution\n- Fault tolerance when nodes fail\n- Supports large-scale distributed systems\n\n---\n\n5. Real World Systems Using Consistent Hashing\n\nMany large-scale systems rely on consistent hashing:\n\nDistributed caches\n- Memcached\n- Redis Cluster\n\nDatabases\n- Cassandra\n- DynamoDB\n\nContent delivery networks\n- Akamai\n- Cloudflare\n\nStorage systems\n- Amazon Dynamo\n\nThese systems need to distribute massive datasets across thousands of machines efficiently.\n\n---\n\n6. Tradeoffs and Challenges\n\nEven though consistent hashing is powerful, it has challenges:\n\nHotspots\nSome keys may become very popular and overload specific nodes.\n\nMitigation:\n- Virtual nodes\n- Load-aware hashing\n\nData rebalancing\nEven though movement is minimized, some data must still move when nodes join or leave.\n\nComplexity\nImplementing consistent hashing is more complex than simple modulo hashing.\n\n---\n\n7. Interview Tips\n\nIn system design interviews, consistent hashing is commonly discussed when designing:\n\n- Distributed caches\n- URL shorteners\n- Distributed databases\n- Load balancing systems\n\nExample interview explanation:\n\n\"To distribute data across multiple servers efficiently, I would use consistent hashing. Both servers and keys are placed on a hash ring. Each key is assigned to the next server clockwise on the ring. When new servers are added, only a small subset of keys need to move, which makes scaling efficient.\"",
+    "gfgLink": "https://www.geeksforgeeks.org/system-design/consistent-hashing/",
     "leetcodeLink": "",
-    "youtubeLink": "",
-    "order": 1
+    "youtubeLink": "https://www.youtube.com/watch?v=zaRkONvyGr8",
+    "order": 1,
+    "links": [
+      {
+        "label": "Wikipedia - Consistent Hashing",
+        "url": "https://en.wikipedia.org/wiki/Consistent_hashing"
+      },
+      {
+        "label": "GeeksforGeeks - Consistent Hashing",
+        "url": "https://www.geeksforgeeks.org/system-design/consistent-hashing/"
+      },
+      {
+        "label": "High Scalability - Consistent Hashing",
+        "url": "http://highscalability.com/consistent-hashing.html"
+      },
+      {
+        "label": "System Design Primer - Consistent Hashing",
+        "url": "https://github.com/donnemartin/system-design-primer/blob/master/solutions/system_design/consistent_hashing/README.md"
+      },
+      {
+        "label": "AWS Dynamo Paper (Consistent Hashing)",
+        "url": "https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf"
+      }
+    ]
   },
-  {
-    "id": "sd_topic_0_scalability_2_horizontal_vs_vertical",
-    "trackId": "system-design",
-    "topicId": "sd_topic_0_scalability",
-    "title": "Horizontal vs Vertical Scaling",
-    "difficulty": "easy",
-    "gfgLink": "",
-    "leetcodeLink": "",
-    "youtubeLink": "",
-    "order": 2
-  },
-  {
-    "id": "sd_topic_0_scalability_3_stateless_services",
-    "trackId": "system-design",
-    "topicId": "sd_topic_0_scalability",
-    "title": "Stateless Services",
-    "difficulty": "easy",
-    "gfgLink": "",
-    "leetcodeLink": "",
-    "youtubeLink": "",
-    "order": 3
-  },
-  {
-    "id": "sd_topic_0_scalability_4_read_replicas",
-    "trackId": "system-design",
-    "topicId": "sd_topic_0_scalability",
-    "title": "Database Read Replicas",
-    "difficulty": "medium",
-    "gfgLink": "",
-    "leetcodeLink": "",
-    "youtubeLink": "",
-    "order": 4
-  },
-  {
-    "id": "sd_topic_0_scalability_5_content_delivery",
-    "trackId": "system-design",
-    "topicId": "sd_topic_0_scalability",
-    "title": "Content Delivery Networks (CDN)",
-    "difficulty": "medium",
-    "gfgLink": "",
-    "leetcodeLink": "",
-    "youtubeLink": "",
-    "order": 5
-  },
+{
+  "id": "sd_topic_0_scalability_2_horizontal_vs_vertical",
+  "trackId": "system-design",
+  "topicId": "sd_topic_0_scalability",
+  "title": "Horizontal vs Vertical Scaling",
+  "difficulty": "easy",
+  "description": "Scaling strategies used to handle increasing system load. Vertical scaling increases the power of a single machine, while horizontal scaling increases capacity by adding more machines.",
+  "explanation": "## Concept\n\nScaling is the process of increasing a system’s capacity to handle more traffic, users, or data. There are two main scaling strategies used in system design: **vertical scaling** and **horizontal scaling**.\n\n---\n\n## Why it is needed\n\nAs applications grow, a single server cannot handle increasing traffic and requests. Scaling ensures that the system can support more users, maintain performance, and avoid overload.\n\n---\n\n## How it works\n\n### Vertical Scaling (Scale-Up)\n\nIncrease the resources of a single machine.\n\nExamples:\n\n- Add more RAM\n- Upgrade CPU\n- Increase disk capacity\n\nExample:\n\nServer with:\n\n- 8 GB RAM\n- 4 CPU cores\n\nUpgraded to:\n\n- 64 GB RAM\n- 16 CPU cores\n\n### Horizontal Scaling (Scale-Out)\n\nAdd more servers and distribute traffic using a **load balancer**.\n\nArchitecture:\n\nClient → Load Balancer → Multiple Application Servers\n\nInstead of one server handling all requests, traffic is distributed across many servers.\n\n---\n\n## Advantages\n\n### Vertical Scaling\n\n- Simple to implement\n- No distributed system complexity\n\n### Horizontal Scaling\n\n- Almost unlimited scalability\n- High availability\n- Better fault tolerance\n\n---\n\n## Disadvantages\n\n### Vertical Scaling\n\n- Limited by hardware capacity\n- Expensive at large scale\n- Single point of failure\n\n### Horizontal Scaling\n\n- More complex architecture\n- Requires distributed systems\n- Data consistency becomes harder\n\n---\n\n## Real-world examples\n\nLarge-scale systems rely heavily on horizontal scaling:\n\n- Netflix\n- Amazon\n- Google\n- Instagram\n\n---\n\n## Interview tips\n\n> Early systems may use vertical scaling, but large-scale systems prefer horizontal scaling with load balancers and distributed databases because it provides better scalability and fault tolerance.",
+  "gfgLink": "https://www.geeksforgeeks.org/system-design/system-design-horizontal-and-vertical-scaling/",
+  "leetcodeLink": "",
+  "youtubeLink": "https://www.youtube.com/watch?v=xpDnVSmNFX0",
+  "order": 2,
+  "links": [
+    {
+      "label": "GeeksforGeeks - Horizontal vs Vertical Scaling",
+      "url": "https://www.geeksforgeeks.org/system-design/system-design-horizontal-and-vertical-scaling/"
+    },
+    {
+      "label": "AWS - Vertical vs Horizontal Scaling",
+      "url": "https://aws.amazon.com/compare/the-difference-between-vertical-and-horizontal-scaling/"
+    },
+    {
+      "label": "System Design Primer - Scaling",
+      "url": "https://github.com/donnemartin/system-design-primer"
+    },
+    {
+      "label": "Microsoft Azure - Scaling Applications",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/scaling"
+    }
+  ]
+},
+{
+  "id": "sd_topic_0_scalability_3_stateless_services",
+  "trackId": "system-design",
+  "topicId": "sd_topic_0_scalability",
+  "title": "Stateless Services",
+  "difficulty": "easy",
+  "description": "Stateless services are services that do not store session or user state on the server itself.",
+  "explanation": "## Concept\n\nA stateless service does not store client session data between requests. Each request contains all the information needed to process it.\n\n---\n\n## Why it is needed\n\nStateless services make systems easier to scale. Since no server stores session information locally, any server instance can process any request.\n\nThis enables:\n\n- Load balancing\n- Horizontal scaling\n- Fault tolerance\n\n---\n\n## How it works\n\nInstead of storing session data in server memory, state is stored externally using:\n\n- Redis\n- Databases\n- Distributed caches\n\nAnother approach is **JWT tokens**, where authentication data is included in each request.\n\nArchitecture:\n\nClient → Load Balancer → Stateless Servers → Shared Storage\n\n---\n\n## Advantages\n\n- Easy horizontal scaling\n- High availability\n- Fault tolerant\n\n---\n\n## Disadvantages\n\n- Requires external storage systems\n- Token size can grow large\n- Security concerns for sensitive data\n\n---\n\n## Real-world examples\n\nStateless architectures are widely used in:\n\n- Microservices\n- Cloud-native applications\n- REST APIs\n\nCompanies using stateless services include:\n\n- Netflix\n- Amazon\n- Uber\n\n---\n\n## Interview tips\n\n> Application servers should be stateless so that any instance can handle requests. Session data should be stored in shared systems like Redis or encoded in tokens.",
+  "gfgLink": "https://www.geeksforgeeks.org/system-design/stateless-vs-stateful-system-design/",
+  "leetcodeLink": "",
+  "youtubeLink": "https://www.youtube.com/watch?v=vYp2sYhZyYQ",
+  "order": 3,
+  "links": [
+    {
+      "label": "12-Factor App - Stateless Processes",
+      "url": "https://12factor.net/processes"
+    },
+    {
+      "label": "NGINX - Stateless Microservices Architecture",
+      "url": "https://www.nginx.com/blog/stateless-microservice-architecture/"
+    },
+    {
+      "label": "GeeksforGeeks - Stateless vs Stateful Systems",
+      "url": "https://www.geeksforgeeks.org/system-design/stateless-vs-stateful-system-design/"
+    },
+    {
+      "label": "AWS - Stateless Applications",
+      "url": "https://aws.amazon.com/blogs/compute/building-stateless-applications/"
+    }
+  ]
+},
+{
+  "id": "sd_topic_0_scalability_4_read_replicas",
+  "trackId": "system-design",
+  "topicId": "sd_topic_0_scalability",
+  "title": "Database Read Replicas",
+  "difficulty": "medium",
+  "description": "Database read replicas are copies of a primary database used to scale read traffic.",
+  "explanation": "## Concept\n\nRead replicas are copies of a primary database used to handle read queries. Writes go to the primary database while replicas serve read operations.\n\n---\n\n## Why it is needed\n\nMost applications have significantly more reads than writes. Read replicas allow systems to scale read traffic and reduce load on the primary database.\n\n---\n\n## How it works\n\nArchitecture:\n\nClient → Application Servers → Primary DB (writes)\n                                  ↓\n                           Read Replicas (reads)\n\nReplication works by copying changes from the primary database using transaction logs.\n\n---\n\n## Advantages\n\n- Scales read capacity\n- Improves performance\n- Reduces load on primary database\n\n---\n\n## Disadvantages\n\n- Replication lag\n- Stale reads\n- Operational complexity\n\n---\n\n## Real-world examples\n\nUsed by systems such as:\n\n- MySQL replication\n- PostgreSQL streaming replication\n- AWS RDS Read Replicas\n\n---\n\n## Interview tips\n\n> For read-heavy workloads, introduce read replicas. Writes go to the primary database while read queries are distributed across replicas.",
+  "gfgLink": "https://www.geeksforgeeks.org/system-design/read-replicas-in-system-design/",
+  "leetcodeLink": "",
+  "youtubeLink": "https://www.youtube.com/watch?v=2y4yzT9r9-M",
+  "order": 4,
+  "links": [
+    {
+      "label": "AWS RDS Read Replicas",
+      "url": "https://aws.amazon.com/rds/features/read-replicas/"
+    },
+    {
+      "label": "Google Cloud SQL Replication",
+      "url": "https://cloud.google.com/sql/docs/postgres/replication"
+    },
+    {
+      "label": "GeeksforGeeks - Read Replicas in System Design",
+      "url": "https://www.geeksforgeeks.org/system-design/read-replicas-in-system-design/"
+    },
+    {
+      "label": "PostgreSQL Streaming Replication",
+      "url": "https://www.postgresql.org/docs/current/warm-standby.html"
+    },
+    {
+      "label": "High Scalability - Database Replication",
+      "url": "http://highscalability.com/database-replication/"
+    }
+  ]
+},
+{
+  "id": "sd_topic_0_scalability_5_content_delivery",
+  "trackId": "system-design",
+  "topicId": "sd_topic_0_scalability",
+  "title": "Content Delivery Networks (CDN)",
+  "difficulty": "medium",
+  "description": "A CDN is a globally distributed network of edge servers that cache and deliver static content closer to users.",
+  "explanation": "## Concept\n\nA Content Delivery Network (CDN) is a distributed network of servers that cache and deliver content closer to users.\n\n---\n\n## Why it is needed\n\nUsers far from the origin server experience higher latency. CDNs reduce latency by serving content from geographically closer locations.\n\n---\n\n## How it works\n\nArchitecture:\n\nUser → DNS → CDN Edge Server\n\nIf cache hit → content returned immediately\n\nIf cache miss → CDN fetches content from origin server and caches it.\n\n---\n\n## Advantages\n\n- Lower latency\n- Reduced load on origin servers\n- Global content delivery\n\n---\n\n## Disadvantages\n\n- Cache invalidation complexity\n- Infrastructure cost\n\n---\n\n## Real-world examples\n\nMajor CDN providers:\n\n- Cloudflare\n- AWS CloudFront\n- Akamai\n\nUsed heavily by companies such as:\n\n- Netflix\n- YouTube\n- Facebook\n\n---\n\n## Interview tips\n\n> Use a CDN to cache static assets like images, JavaScript files, and videos. This reduces latency and improves scalability for global users.",
+  "gfgLink": "https://www.geeksforgeeks.org/system-design/content-delivery-network-cdn-system-design/",
+  "leetcodeLink": "",
+  "youtubeLink": "https://www.youtube.com/watch?v=Bsq5cKkS33I",
+  "order": 5,
+  "links": [
+    {
+      "label": "Cloudflare - What is a CDN?",
+      "url": "https://www.cloudflare.com/learning/cdn/what-is-a-cdn/"
+    },
+    {
+      "label": "AWS CloudFront",
+      "url": "https://aws.amazon.com/cloudfront/"
+    },
+    {
+      "label": "GeeksforGeeks - CDN in System Design",
+      "url": "https://www.geeksforgeeks.org/system-design/content-delivery-network-cdn-system-design/"
+    },
+    {
+      "label": "Google Cloud CDN",
+      "url": "https://cloud.google.com/cdn"
+    },
+    {
+      "label": "High Scalability - CDN Architecture",
+      "url": "http://highscalability.com/blog/2013/7/8/why-use-a-content-delivery-network-cdn.html"
+    }
+  ]
+},
   {
     "id": "sd_topic_1_caching_0_cache_aside",
     "trackId": "system-design",
     "topicId": "sd_topic_1_caching",
     "title": "Cache-Aside (Lazy Loading)",
     "difficulty": "medium",
+    "description": "Application manages cache: on a miss, load data from the DB and populate the cache.",
+    "explanation": "Also known as lazy loading: on read, the application checks the cache first. If data is missing (cache miss), it reads from the database, then writes the result into the cache. On writes, the application updates the database and invalidates (or updates) the cache entry. Advantages: cache only contains data that is actually needed. Drawbacks: cache misses add latency and can overload the DB if many misses happen at once (thundering herd).",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 0
+    "order": 0,
+    "links": [
+      {
+        "label": "Microsoft - Cache-Aside Pattern",
+        "url": "https://learn.microsoft.com/azure/architecture/patterns/cache-aside"
+      },
+      {
+        "label": "AWS - Database Caching Patterns",
+        "url": "https://docs.aws.amazon.com/whitepapers/latest/database-caching-strategies-using-redis/caching-patterns.html"
+      }
+    ]
   },
   {
     "id": "sd_topic_1_caching_1_write_through",
@@ -5098,10 +5246,18 @@
     "topicId": "sd_topic_1_caching",
     "title": "Write-Through Cache",
     "difficulty": "medium",
+    "description": "Every write goes to cache and DB together so cache stays in sync.",
+    "explanation": "In write-through caching, whenever data is written, the cache is updated first (and often propagated to the database). This ensures the cache always has the latest data, so reads hit the cache. The downside is slower write performance (two systems are updated) and potentially redundant writes for infrequently-read data. Use this when read performance is critical and eventual consistency must be minimized【47†L65-L74】【47†L84-L93】.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 1
+    "order": 1,
+    "links": [
+      {
+        "label": "AWS - Database Caching Strategies",
+        "url": "https://docs.aws.amazon.com/whitepapers/latest/database-caching-strategies-using-redis/caching-patterns.html"
+      }
+    ]
   },
   {
     "id": "sd_topic_1_caching_2_write_behind",
@@ -5109,10 +5265,18 @@
     "topicId": "sd_topic_1_caching",
     "title": "Write-Behind (Write-Back)",
     "difficulty": "medium",
+    "description": "Writes go to cache first; DB is updated asynchronously.",
+    "explanation": "Also called write-back: on write, data is written to the cache and the application returns success immediately. A background process then flushes cached changes to the database in batches. This yields very low write latency and high throughput, but risks data loss if the cache fails before the write is flushed. Use durable write-behind mechanisms or persistent queues to mitigate this risk. Good for write-heavy scenarios where some delay in persistence is acceptable.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 2
+    "order": 2,
+    "links": [
+      {
+        "label": "AWS - Database Caching Strategies",
+        "url": "https://docs.aws.amazon.com/whitepapers/latest/database-caching-strategies-using-redis/caching-patterns.html"
+      }
+    ]
   },
   {
     "id": "sd_topic_1_caching_3_redis",
@@ -5120,10 +5284,22 @@
     "topicId": "sd_topic_1_caching",
     "title": "Redis – Use Cases & Patterns",
     "difficulty": "medium",
+    "description": "When and how to use Redis: caching, sessions, rate limiting, pub/sub, and data structures.",
+    "explanation": "Redis is an in-memory key-value store (with optional persistence). Common uses: caching hot data for fast lookup; session store for web applications; counters and rate limiters (using INCR with TTL); leaderboards with sorted sets; simple Pub/Sub for notifications. Redis supports various data types (strings, hashes, lists, sets) and can replicate or cluster for scalability. Consider eviction policies (LRU) and use persistence (RDB/AOF) for durability.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 3
+    "order": 3,
+    "links": [
+      {
+        "label": "Redis - Official Documentation",
+        "url": "https://redis.io/docs/"
+      },
+      {
+        "label": "Redis Use Cases",
+        "url": "https://redis.io/topics/use-cases"
+      }
+    ]
   },
   {
     "id": "sd_topic_1_caching_4_cache_invalidation",
@@ -5131,10 +5307,22 @@
     "topicId": "sd_topic_1_caching",
     "title": "Cache Invalidation Strategies",
     "difficulty": "hard",
+    "description": "How to keep cache consistent with the source of truth when data changes.",
+    "explanation": "Invalidate or update cache entries when underlying data changes. Common strategies: invalidate the specific key on write (delete or update cache entry), or use short TTLs so cached items expire naturally. For related data (e.g. categories), use tag-based invalidation to remove multiple keys. Prevent thundering herd (many clients refreshing at once) by using locks, request coalescing, or staggering expirations. Accept that caching introduces eventual consistency: clients may briefly see stale data until the cache entry is refreshed.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 4
+    "order": 4,
+    "links": [
+      {
+        "label": "GeeksforGeeks - Cache Invalidation Strategies",
+        "url": "https://www.geeksforgeeks.org/cache-invalidation-strategies/"
+      },
+      {
+        "label": "Medium - Caching Strategies",
+        "url": "https://medium.com/@sohail_cache/cache-invalidation-strategies-dde48a67ad54"
+      }
+    ]
   },
   {
     "id": "sd_topic_1_caching_5_ttl_expiry",
@@ -5142,10 +5330,22 @@
     "topicId": "sd_topic_1_caching",
     "title": "TTL and Expiry",
     "difficulty": "easy",
+    "description": "Use time-to-live (TTL) so cached entries expire automatically and don't serve stale data forever.",
+    "explanation": "Assign an expiration (TTL) to cache entries so they are invalidated after that period. Choose TTL based on how often data changes: shorter TTL for volatile data. Expiry can be passive (checked on access) or active (background). Balance freshness vs load: too short TTL leads to frequent cache misses and more DB load, while too long TTL risks stale data. Consider refreshing popular data proactively when nearing expiry.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 5
+    "order": 5,
+    "links": [
+      {
+        "label": "Redis - Expire Command",
+        "url": "https://redis.io/commands/expire"
+      },
+      {
+        "label": "Memcached - Expiration",
+        "url": "https://github.com/memcached/memcached/wiki/Programming#expiration"
+      }
+    ]
   },
   {
     "id": "sd_topic_2_databases_0_sql_vs_nosql",
@@ -5153,10 +5353,22 @@
     "topicId": "sd_topic_2_databases",
     "title": "SQL vs NoSQL – When to Use Which",
     "difficulty": "medium",
+    "description": "Compare relational (SQL) and non-relational (NoSQL) databases and when to choose each.",
+    "explanation": "SQL (relational) databases use fixed schemas, ACID transactions, and support complex queries and joins. They ensure data consistency and are ideal for structured, transactional data. NoSQL databases (key-value, document, wide-column, graph) offer flexible schema and horizontal scaling. They often sacrifice strict consistency (use eventual consistency) for high write throughput and ease of scaling. Use SQL when you need complex queries and strong consistency; use NoSQL for large-scale, high-throughput or schema-flexible needs. Many systems use both (polyglot persistence).",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 0
+    "order": 0,
+    "links": [
+      {
+        "label": "AWS - SQL vs NoSQL Overview",
+        "url": "https://aws.amazon.com/nosql/"
+      },
+      {
+        "label": "MongoDB - NoSQL vs SQL",
+        "url": "https://www.mongodb.com/nosql-explained/sql-vs-nosql"
+      }
+    ]
   },
   {
     "id": "sd_topic_2_databases_1_indexing",
@@ -5164,10 +5376,22 @@
     "topicId": "sd_topic_2_databases",
     "title": "Indexing and Query Optimization",
     "difficulty": "medium",
+    "description": "How indexes speed up reads and how to design and tune them without hurting writes.",
+    "explanation": "Indexes (e.g. B-tree, hash) let the database quickly locate rows by key, speeding up reads. Composite indexes (multiple columns) support complex queries and can cover queries to avoid fetching from the base table. The tradeoff: each index adds overhead on INSERT/UPDATE/DELETE (slower writes) and uses extra storage. Use EXPLAIN or query plan tools to identify missing indexes and unused indexes. Avoid over-indexing: drop indexes that aren't helping performance. Also consider index maintenance costs for heavy write workloads.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 1
+    "order": 1,
+    "links": [
+      {
+        "label": "Use The Index, Luke! (SQL Performance)",
+        "url": "https://use-the-index-luke.com/"
+      },
+      {
+        "label": "PostgreSQL - Index Types",
+        "url": "https://www.postgresql.org/docs/current/indexes-types.html"
+      }
+    ]
   },
   {
     "id": "sd_topic_2_databases_2_sharding",
@@ -5175,10 +5399,22 @@
     "topicId": "sd_topic_2_databases",
     "title": "Sharding (Horizontal Partitioning)",
     "difficulty": "hard",
+    "description": "Split a large dataset across multiple databases (shards) to scale write and read capacity.",
+    "explanation": "Divide data across shards based on a shard key (e.g. user_id or region). Range-based sharding places contiguous key ranges on each shard; hash-based sharding distributes keys evenly. When adding shards, data must be redistributed (consistent hashing can minimize moves). Challenges: cross-shard joins and transactions become complex (often avoided). Monitor for 'hot shards' (uneven load) and rebalance if needed. Effective sharding increases horizontal scale but adds complexity.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 2
+    "order": 2,
+    "links": [
+      {
+        "label": "System Design Primer - Sharding",
+        "url": "https://github.com/donnemartin/system-design-primer/blob/master/solutions/system_design/sharding/README.md"
+      },
+      {
+        "label": "Citus - PostgreSQL Sharding",
+        "url": "https://docs.citusdata.com/en/v10.2/develop/forming_and_distributing_tables.html"
+      }
+    ]
   },
   {
     "id": "sd_topic_2_databases_3_replication",
@@ -5186,10 +5422,22 @@
     "topicId": "sd_topic_2_databases",
     "title": "Replication (Leader-Follower, Multi-Leader)",
     "difficulty": "medium",
+    "description": "Replicate data across nodes for availability and read scaling. Compare single-leader vs multi-leader.",
+    "explanation": "Leader-Follower (Primary-Replica): one primary node accepts writes, and followers replicate its data (synchronously or asynchronously). Simple and consistent, but primary is a write bottleneck. Multi-Leader (Master-Master): multiple nodes accept writes; conflicts must be resolved (e.g. last-write-wins) or avoided. In multi-leader, replicas are more available for writes but conflict management is needed. Replication can be synchronous (slower writes, no lag) or asynchronous (faster writes, possible lag between replicas).",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 3
+    "order": 3,
+    "links": [
+      {
+        "label": "MongoDB - Replication",
+        "url": "https://docs.mongodb.com/manual/replication/"
+      },
+      {
+        "label": "MySQL - Replication",
+        "url": "https://dev.mysql.com/doc/refman/8.0/en/replication.html"
+      }
+    ]
   },
   {
     "id": "sd_topic_2_databases_4_connection_pooling",
@@ -5197,10 +5445,22 @@
     "topicId": "sd_topic_2_databases",
     "title": "Connection Pooling",
     "difficulty": "easy",
+    "description": "Reuse a fixed set of DB connections instead of opening a new one per request.",
+    "explanation": "Maintain a pool of open database connections. Applications check out a connection for a query and return it when done. This avoids the overhead of establishing and tearing down connections for each request, and prevents exhausting the database’s connection limit. Tune pool size to expected concurrency and database limits: too few connections cause waiting, too many can overwhelm the database. Use pool metrics (like wait queue length) to adjust size.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 4
+    "order": 4,
+    "links": [
+      {
+        "label": "HikariCP - JDBC Connection Pool",
+        "url": "https://github.com/brettwooldridge/HikariCP"
+      },
+      {
+        "label": "PostgreSQL - Connection Pooling",
+        "url": "https://www.postgresql.org/docs/current/libpq-pgpool.html"
+      }
+    ]
   },
   {
     "id": "sd_topic_2_databases_5_transactions_acidity",
@@ -5208,10 +5468,22 @@
     "topicId": "sd_topic_2_databases",
     "title": "Transactions and ACID",
     "difficulty": "medium",
+    "description": "What ACID guarantees mean and how they affect scalability and system design.",
+    "explanation": "ACID: Atomicity (all-or-nothing execution), Consistency (data validity), Isolation (concurrent transactions appear serial), Durability (committed writes survive failures). Strong isolation (serializable) avoids anomalies but reduces concurrency. In distributed systems, two-phase commit (2PC) can enforce ACID across services but is slow and can block. Many systems opt for weaker models: e.g. BASE/eventual consistency, or use Saga pattern for distributed commits. Trade-offs: prioritizing strict ACID ensures correctness, but may sacrifice performance and availability under network failures.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 5
+    "order": 5,
+    "links": [
+      {
+        "label": "ACID Transactions",
+        "url": "https://en.wikipedia.org/wiki/ACID"
+      },
+      {
+        "label": "Saga Pattern (Distributed Transactions)",
+        "url": "https://microservices.io/patterns/data/saga.html"
+      }
+    ]
   },
   {
     "id": "sd_topic_3_messaging_0_message_queues",
@@ -5219,10 +5491,22 @@
     "topicId": "sd_topic_3_messaging",
     "title": "Message Queues – Basics",
     "difficulty": "medium",
+    "description": "Use message queues to decouple producers and consumers and handle async or bursty workloads.",
+    "explanation": "Producers send messages to a queue; consumers asynchronously pull messages from the queue to process. This decouples components and smooths out bursts (queue buffers spikes). Queues can be durable to avoid data loss. Delivery modes: at-least-once (re-delivery until ack) requiring idempotent processing, or exactly-once (complex, often handled with dedup keys). Dead-letter queues store messages that fail repeatedly. Examples: RabbitMQ, AWS SQS, Kafka (as a commit log).",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 0
+    "order": 0,
+    "links": [
+      {
+        "label": "RabbitMQ - Tutorial",
+        "url": "https://www.rabbitmq.com/tutorials/tutorial-one-python.html"
+      },
+      {
+        "label": "AWS SQS",
+        "url": "https://aws.amazon.com/sqs/"
+      }
+    ]
   },
   {
     "id": "sd_topic_3_messaging_1_pub_sub",
@@ -5230,10 +5514,22 @@
     "topicId": "sd_topic_3_messaging",
     "title": "Pub/Sub Model",
     "difficulty": "medium",
+    "description": "Publish-subscribe: publishers send to topics; subscribers receive messages without knowing each other.",
+    "explanation": "In pub/sub, messages published to a topic are broadcast to all subscribers of that topic. This enables one-to-many communication (fan-out). Publishers and subscribers are decoupled: publisher sends events without knowing who will receive them. Use cases: broadcasting events, notifications, or streaming updates. Compare with queues: a message in a queue is consumed by only one subscriber; in pub/sub, all subscribers receive the message. Examples: Google Cloud Pub/Sub, Kafka (topics with multiple consumers), MQTT.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 1
+    "order": 1,
+    "links": [
+      {
+        "label": "Google Pub/Sub",
+        "url": "https://cloud.google.com/pubsub"
+      },
+      {
+        "label": "Apache Kafka",
+        "url": "https://kafka.apache.org"
+      }
+    ]
   },
   {
     "id": "sd_topic_3_messaging_2_kafka",
@@ -5241,10 +5537,22 @@
     "topicId": "sd_topic_3_messaging",
     "title": "Apache Kafka – Concepts",
     "difficulty": "hard",
+    "description": "Understand Kafka's log-based architecture, partitions, consumer groups, and ordering guarantees.",
+    "explanation": "Kafka organizes messages into topics, split into partitions. Each partition is an append-only ordered log. Producers write to topics/partitions; consumers form groups to read. Each partition’s log is consumed by only one consumer in a group, allowing parallel consumption. Kafka retains messages for a configurable time. Ordering is guaranteed within a partition. For exactly-once semantics, use Kafka transactions and idempotent producers so a message is committed atomically【47†L65-L74】【47†L84-L93】.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 2
+    "order": 2,
+    "links": [
+      {
+        "label": "Kafka Documentation",
+        "url": "https://kafka.apache.org/documentation/"
+      },
+      {
+        "label": "Confluent - Kafka Exactly-Once",
+        "url": "https://www.confluent.io/blog/kafka-exactly-once/"
+      }
+    ]
   },
   {
     "id": "sd_topic_3_messaging_3_event_driven",
@@ -5252,10 +5560,22 @@
     "topicId": "sd_topic_3_messaging",
     "title": "Event-Driven Architecture",
     "difficulty": "medium",
+    "description": "Design systems where components communicate via events rather than direct calls.",
+    "explanation": "Services emit events to an event broker or stream; other services subscribe and react asynchronously. This decouples services: producers don’t need to know about consumers. It also provides an audit trail of events. Patterns: Event Sourcing (state changes are stored as events; current state is replayed from events) vs Event Notification (simply notifying other services of an event). Ensure idempotent consumers (events may be delivered more than once), and handle schema evolution of event data.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 3
+    "order": 3,
+    "links": [
+      {
+        "label": "Martin Fowler - Event-Driven Architecture",
+        "url": "https://martinfowler.com/articles/201701-event-driven.html"
+      },
+      {
+        "label": "Microservices - Event Sourcing",
+        "url": "https://microservices.io/patterns/data/event-sourcing.html"
+      }
+    ]
   },
   {
     "id": "sd_topic_3_messaging_4_ordering_guarantees",
@@ -5263,10 +5583,22 @@
     "topicId": "sd_topic_3_messaging",
     "title": "Ordering and Exactly-Once",
     "difficulty": "hard",
+    "description": "How to achieve ordering (per key or global) and exactly-once processing in distributed messaging.",
+    "explanation": "To guarantee ordering, partition messages by a key so that related messages go to the same queue/partition. For example, Kafka ensures order within a partition if all messages with the same key go to one partition. For exactly-once delivery, use idempotent producers (unique IDs) and transactional messaging (e.g. Kafka’s exactly-once features) to prevent duplicates【47†L65-L74】【47†L84-L93】. Alternatively, consumers can use idempotency keys or dedupe logic when writing to storage.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 4
+    "order": 4,
+    "links": [
+      {
+        "label": "Kafka Idempotent and Transactions",
+        "url": "https://kafka.apache.org/documentation/#produceridempotent"
+      },
+      {
+        "label": "Azure - Exactly-Once Processing",
+        "url": "https://docs.microsoft.com/azure/architecture/patterns/exactly-once-processing"
+      }
+    ]
   },
   {
     "id": "sd_topic_4_distributed_0_cap",
@@ -5274,10 +5606,22 @@
     "topicId": "sd_topic_4_distributed",
     "title": "CAP Theorem",
     "difficulty": "medium",
+    "description": "In a partition, you cannot have both consistency and availability. Understand the tradeoff.",
+    "explanation": "CAP theorem: in the presence of a network Partition, a distributed system must choose either Consistency or Availability【55†L158-L166】. Consistency (CP) means always returning the latest data (and may reject requests if unable), while Availability (AP) means always responding (possibly with stale data). For example, traditional SQL databases favor consistency (reject on partition), whereas some NoSQL stores (Dynamo, Cassandra) favor availability (serve reads even if slightly stale).",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 0
+    "order": 0,
+    "links": [
+      {
+        "label": "CAP Theorem - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/CAP_theorem"
+      },
+      {
+        "label": "CAP Theorem - DigitalOcean",
+        "url": "https://www.digitalocean.com/community/tutorials/cap-theorem"
+      }
+    ]
   },
   {
     "id": "sd_topic_4_distributed_1_pacelc",
@@ -5285,10 +5629,18 @@
     "topicId": "sd_topic_4_distributed",
     "title": "PACELC",
     "difficulty": "medium",
+    "description": "Extension of CAP: when there is a Partition, choose A or C; Else (no partition), choose Latency or Consistency.",
+    "explanation": "PACELC refines CAP by noting that even when the system is healthy (no partition), there’s a trade-off between latency (performance) and consistency. In partitions (P), choose Availability or Consistency (as in CAP). Else (E), choose between low Latency and consistency. E.g. DynamoDB (AP/EL) prioritizes low latency, while Spanner (CP/EC) prioritizes consistency, even at the cost of higher latency【55†L158-L166】.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 1
+    "order": 1,
+    "links": [
+      {
+        "label": "PACELC Theorem - InfoQ",
+        "url": "https://www.infoq.com/articles/PACELC/"
+      }
+    ]
   },
   {
     "id": "sd_topic_4_distributed_2_consistency_models",
@@ -5296,10 +5648,22 @@
     "topicId": "sd_topic_4_distributed",
     "title": "Consistency Models (Strong, Eventual)",
     "difficulty": "hard",
+    "description": "Compare strong consistency, eventual consistency, and models in between (causal, read-your-writes).",
+    "explanation": "Strong consistency (linearizability) means all clients see the latest write; reads return the most recent value. Eventual consistency means updates propagate over time: replicas may serve stale data but will converge. There are intermediate models: causal consistency ensures causally related updates are seen in order; read-your-writes (session consistency) ensures a client sees its own writes. Distributed systems often use last-write-wins or CRDTs for conflict resolution under eventual consistency【55†L158-L166】.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 2
+    "order": 2,
+    "links": [
+      {
+        "label": "Eventual Consistency - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Eventual_consistency"
+      },
+      {
+        "label": "Causal Consistency (Research)",
+        "url": "https://dl.acm.org/doi/10.1145/256128.256131"
+      }
+    ]
   },
   {
     "id": "sd_topic_4_distributed_3_distributed_tracing",
@@ -5307,10 +5671,22 @@
     "topicId": "sd_topic_4_distributed",
     "title": "Distributed Tracing",
     "difficulty": "medium",
+    "description": "Trace a request across services using trace IDs and spans to debug latency and failures.",
+    "explanation": "Assign a unique trace ID to each user request and create spans for each service call in the trace. Propagate the trace context across service calls (usually in HTTP headers). Collect traces in a tracing system (e.g. Jaeger, Zipkin, OpenTelemetry) to visualize end-to-end flows. Use sampling to reduce overhead. Tracing helps identify latency bottlenecks and failed hops in microservices.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 3
+    "order": 3,
+    "links": [
+      {
+        "label": "OpenTelemetry",
+        "url": "https://opentelemetry.io/"
+      },
+      {
+        "label": "Jaeger Tracing",
+        "url": "https://www.jaegertracing.io/"
+      }
+    ]
   },
   {
     "id": "sd_topic_4_distributed_4_idempotency",
@@ -5318,10 +5694,22 @@
     "topicId": "sd_topic_4_distributed",
     "title": "Idempotency",
     "difficulty": "medium",
+    "description": "Design APIs and operations so that repeating the same request has the same effect as doing it once.",
+    "explanation": "Clients generate a unique idempotency key (usually a UUID) for each request. The server stores recent idempotency keys and their outcomes. If a request with the same key is received again, the server returns the original result without re-executing the operation. This prevents duplicate side effects (e.g. double charges). Keys are typically short-lived (e.g. 24 hours) and must include request parameters to be truly idempotent. This is critical for safe retries in distributed systems.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 4
+    "order": 4,
+    "links": [
+      {
+        "label": "Stripe - Idempotent Requests",
+        "url": "https://stripe.com/docs/api/idempotent_requests"
+      },
+      {
+        "label": "Idempotency Pattern",
+        "url": "https://docs.microsoft.com/azure/architecture/patterns/idempotency"
+      }
+    ]
   },
   {
     "id": "sd_topic_5_api_0_rest_basics",
@@ -5329,10 +5717,18 @@
     "topicId": "sd_topic_5_api",
     "title": "REST API – Basics and Best Practices",
     "difficulty": "easy",
+    "description": "Design HTTP APIs that are resource-oriented, stateless, and use standard methods and status codes.",
+    "explanation": "Expose resources (nouns) via URLs (e.g. /users, /orders). Use HTTP verbs to operate: GET for read (idempotent), POST for create, PUT/PATCH for update (PUT idempotent), DELETE for removal. Maintain statelessness: no server-side sessions. Return appropriate status codes (200 OK, 201 Created, 400 Bad Request, 401 Unauthorized, 404 Not Found, 429 Too Many Requests, 500 Internal Server Error). Use JSON for payloads and version your API (URL or header).",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 0
+    "order": 0,
+    "links": [
+      {
+        "label": "REST API Tutorial",
+        "url": "https://restfulapi.net/"
+      }
+    ]
   },
   {
     "id": "sd_topic_5_api_1_rest_vs_grpc",
@@ -5340,10 +5736,22 @@
     "topicId": "sd_topic_5_api",
     "title": "REST vs gRPC",
     "difficulty": "medium",
+    "description": "When to use REST (HTTP/JSON) vs gRPC (HTTP/2, binary, codegen) for services.",
+    "explanation": "REST with JSON is simple, human-readable, and widely supported (browsers, mobile, HTTP/1.1). Good for public or external APIs. gRPC uses HTTP/2, Protocol Buffers (binary), and supports bi-directional streaming and strong typing. It requires code generation for clients. gRPC offers better performance and built-in metadata. Use gRPC for internal microservices where efficiency and streaming are needed; use REST for broad compatibility (especially with web or third-party clients).",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 1
+    "order": 1,
+    "links": [
+      {
+        "label": "gRPC vs REST - Google Cloud",
+        "url": "https://cloud.google.com/blog/products/api-management/why-grpc-and-http2"
+      },
+      {
+        "label": "Baeldung - gRPC vs REST",
+        "url": "https://www.baeldung.com/grpc-vs-rest"
+      }
+    ]
   },
   {
     "id": "sd_topic_5_api_2_rate_limiting",
@@ -5351,10 +5759,22 @@
     "topicId": "sd_topic_5_api",
     "title": "Rate Limiting (Token Bucket, Sliding Window)",
     "difficulty": "medium",
+    "description": "Limit the rate of requests per user or IP to protect the system and ensure fairness.",
+    "explanation": "Use algorithms like token bucket or sliding window to throttle requests. Token bucket allows bursts (token capacity) that refill at a steady rate. Sliding window counts requests in recent time window. Store counters or tokens in Redis or a distributed store keyed by user/IP. When limit is exceeded, return HTTP 429 (Too Many Requests) with a Retry-After header. For distributed limits, use a central store or a shard of caches; or implement per-region limits and global fallback.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 2
+    "order": 2,
+    "links": [
+      {
+        "label": "Rate Limiting Pattern",
+        "url": "https://cloudflare.com/en-gb/learning/api/rate-limit-rules/"
+      },
+      {
+        "label": "Token Bucket Algorithm",
+        "url": "https://en.wikipedia.org/wiki/Token_bucket"
+      }
+    ]
   },
   {
     "id": "sd_topic_5_api_3_versioning",
@@ -5362,10 +5782,22 @@
     "topicId": "sd_topic_5_api",
     "title": "API Versioning",
     "difficulty": "easy",
+    "description": "How to evolve APIs without breaking existing clients: URL, header, or content negotiation.",
+    "explanation": "Include version information in the API (e.g. /v1/users) or in headers (Accept-Version). Prefer backward-compatible changes when possible (add new fields, allow optional parameters). Maintain older versions during a transition period and document changes. Clearly communicate deprecation timelines. Use semantic versioning (major.minor) so clients know when breaking changes occur. An API gateway can route different versions to appropriate services.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 3
+    "order": 3,
+    "links": [
+      {
+        "label": "API Versioning - Microsoft",
+        "url": "https://docs.microsoft.com/azure/architecture/best-practices/api-design#versioning"
+      },
+      {
+        "label": "API Versioning - Nordic APIs",
+        "url": "https://nordicapis.com/what-is-api-versioning/"
+      }
+    ]
   },
   {
     "id": "sd_topic_5_api_4_pagination",
@@ -5373,10 +5805,22 @@
     "topicId": "sd_topic_5_api",
     "title": "Pagination (Offset vs Cursor)",
     "difficulty": "easy",
+    "description": "Return large lists in pages. Compare offset-based (page 1, 2) with cursor-based pagination.",
+    "explanation": "Offset pagination uses page numbers (LIMIT/OFFSET in SQL). Simple but can be slow for large offsets and inconsistent if data changes. Cursor-based uses a pointer (e.g. last item ID or timestamp) to fetch the next batch; it’s more efficient on large datasets and avoids skipping items if data shifts. Clients use opaque cursors to page. For cursor pagination, ensure indexed sort keys (like date or ID). Include links or tokens for navigation.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 4
+    "order": 4,
+    "links": [
+      {
+        "label": "StackOverflow - Pagination",
+        "url": "https://stackoverflow.com/questions/1496252/infinite-scroll-pagination-with-rails"
+      },
+      {
+        "label": "Stripe - API Pagination",
+        "url": "https://stripe.com/docs/api/pagination"
+      }
+    ]
   },
   {
     "id": "sd_topic_6_security_0_jwt",
@@ -5384,10 +5828,22 @@
     "topicId": "sd_topic_6_security",
     "title": "JWT and Stateless Auth",
     "difficulty": "medium",
+    "description": "Use JSON Web Tokens for stateless authentication: structure, signing, and tradeoffs.",
+    "explanation": "JWT is a signed token (header.payload.signature) that carries user identity and claims. On each request, the server verifies the signature (using a shared secret or public key) to authenticate without a server session store. Include minimal user data in the token (ID, roles). Use short expiration (minutes) and refresh tokens for long-lived sessions. Do not store sensitive secrets in the payload (it’s only base64-encoded). Implement token revocation or blacklist if needed.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 0
+    "order": 0,
+    "links": [
+      {
+        "label": "JWT.io - Introduction",
+        "url": "https://jwt.io/introduction/"
+      },
+      {
+        "label": "Auth0 - JWT Best Practices",
+        "url": "https://auth0.com/docs/security/tokens/json-web-tokens/json-web-token-best-practices"
+      }
+    ]
   },
   {
     "id": "sd_topic_6_security_1_oauth",
@@ -5395,10 +5851,22 @@
     "topicId": "sd_topic_6_security",
     "title": "OAuth 2.0 – Flows",
     "difficulty": "medium",
+    "description": "Delegate authorization: let users grant third-party apps limited access without sharing passwords.",
+    "explanation": "OAuth2 flows: Authorization Code (with PKCE) for web/mobile apps: user logs into identity provider (IdP), redirects back with a code, then app exchanges code for access/refresh tokens. Client Credentials for server-to-server: app uses its credentials to get a token. Scopes limit permissions. Use refresh tokens to renew access. Ensure secure redirect URIs and state parameters to prevent CSRF. Common providers: Google, Facebook, Auth0.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 1
+    "order": 1,
+    "links": [
+      {
+        "label": "OAuth 2.0 RFC 6749",
+        "url": "https://tools.ietf.org/html/rfc6749"
+      },
+      {
+        "label": "OAuth 2.0 Overview",
+        "url": "https://www.digitalocean.com/community/tutorials/an-introduction-to-oauth-2"
+      }
+    ]
   },
   {
     "id": "sd_topic_6_security_2_https_tls",
@@ -5406,10 +5874,22 @@
     "topicId": "sd_topic_6_security",
     "title": "HTTPS and TLS",
     "difficulty": "easy",
+    "description": "Encrypt and authenticate traffic between client and server using TLS.",
+    "explanation": "Use TLS (HTTPS) for all client-server communication. TLS handshake: negotiate a cipher, verify server certificate (signed by CA), and establish session keys. This ensures confidentiality and integrity. Enforce HTTPS with HTTP Strict Transport Security (HSTS). Manage certificates (renew with Let’s Encrypt). Terminate TLS at load balancers or use service mesh for in-cluster encryption. Use modern cipher suites and enable Perfect Forward Secrecy.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 2
+    "order": 2,
+    "links": [
+      {
+        "label": "Mozilla - TLS Configuration",
+        "url": "https://wiki.mozilla.org/Security/Server_Side_TLS"
+      },
+      {
+        "label": "Let's Encrypt - Getting Started",
+        "url": "https://letsencrypt.org/getting-started/"
+      }
+    ]
   },
   {
     "id": "sd_topic_6_security_3_secrets_management",
@@ -5417,10 +5897,22 @@
     "topicId": "sd_topic_6_security",
     "title": "Secrets Management (High-Level)",
     "difficulty": "medium",
+    "description": "Store and distribute API keys, DB credentials, and other secrets securely.",
+    "explanation": "Do not hardcode secrets in code. Use a secure store like HashiCorp Vault, AWS Secrets Manager, or Azure Key Vault. Applications retrieve secrets at runtime (e.g. via API call or environment variable). Rotate secrets regularly and apply least privilege (each service can only access its own secrets). Audit access to secrets. For tokens or certificates, consider using Hardware Security Modules (HSM) or KMS. Keep secrets encrypted at rest and in transit.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 3
+    "order": 3,
+    "links": [
+      {
+        "label": "HashiCorp Vault",
+        "url": "https://www.vaultproject.io/"
+      },
+      {
+        "label": "AWS Secrets Manager",
+        "url": "https://aws.amazon.com/secrets-manager/"
+      }
+    ]
   },
   {
     "id": "sd_topic_7_realtime_0_websockets",
@@ -5428,10 +5920,22 @@
     "topicId": "sd_topic_7_realtime",
     "title": "WebSockets",
     "difficulty": "medium",
+    "description": "Full-duplex, persistent connection between client and server for real-time communication.",
+    "explanation": "WebSockets upgrade an HTTP connection to a bidirectional TCP socket. Once established, client and server can send messages anytime. Low overhead for real-time updates. Use cases: chat apps, live notifications, multiplayer games. At scale: use sticky sessions (each client sticks to a server) or a message broker (e.g. Redis Pub/Sub) to broadcast between WebSocket servers. Implement ping/pong or heartbeats to detect broken connections.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 0
+    "order": 0,
+    "links": [
+      {
+        "label": "MDN - WebSocket API",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API"
+      },
+      {
+        "label": "WebSocket RFC",
+        "url": "https://tools.ietf.org/html/rfc6455"
+      }
+    ]
   },
   {
     "id": "sd_topic_7_realtime_1_long_polling",
@@ -5439,10 +5943,18 @@
     "topicId": "sd_topic_7_realtime",
     "title": "Long Polling",
     "difficulty": "easy",
+    "description": "Client holds a request open until the server has new data or a timeout; then repeats.",
+    "explanation": "Fallback for real-time updates if WebSockets aren't available. The client sends an HTTP request which the server holds until an event occurs (or a timeout). Once the server responds, the client immediately sends a new request. This incurs higher latency and more HTTP overhead than WebSockets, but works with standard HTTP. Use it for simple use-cases or legacy browsers.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 1
+    "order": 1,
+    "links": [
+      {
+        "label": "MDN - Long Polling",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#long_polling"
+      }
+    ]
   },
   {
     "id": "sd_topic_7_realtime_2_sse",
@@ -5450,10 +5962,22 @@
     "topicId": "sd_topic_7_realtime",
     "title": "Server-Sent Events (SSE)",
     "difficulty": "easy",
+    "description": "Server pushes events to the client over a single HTTP connection; one-way only.",
+    "explanation": "Client uses the EventSource API to open a persistent HTTP connection. The server sends events in text/event-stream format. SSE is one-way (server→client) and supports automatic reconnection on disconnect. Use cases: news feeds, stock tickers, notifications. Advantages: simpler than WebSockets, reuses HTTP, works through proxies. Limitations: no binary support, single direction, one event source per client.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 2
+    "order": 2,
+    "links": [
+      {
+        "label": "MDN - Server-Sent Events",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events"
+      },
+      {
+        "label": "WHATWG - Server-sent Events",
+        "url": "https://html.spec.whatwg.org/multipage/server-sent-events.html"
+      }
+    ]
   },
   {
     "id": "sd_topic_7_realtime_3_streaming",
@@ -5461,10 +5985,22 @@
     "topicId": "sd_topic_7_realtime",
     "title": "Streaming Data Pipelines",
     "difficulty": "hard",
+    "description": "Process unbounded streams of data (e.g. Kafka to consumers) with low latency and backpressure.",
+    "explanation": "Use a streaming platform (Kafka, Kinesis) as the data source. Set up stream processors (Apache Flink, Spark Streaming, etc.) or event consumers to process data in real time. Handle unbounded data with windowing (time or count windows) for aggregation. Ensure exactly-once processing by using transactional writes or idempotent operations. Implement backpressure: if consumers lag, buffer or autoscale consumers. Design for stateful processing if needed, and consider data retention policies.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 3
+    "order": 3,
+    "links": [
+      {
+        "label": "Apache Flink",
+        "url": "https://flink.apache.org/"
+      },
+      {
+        "label": "Streaming Patterns",
+        "url": "https://martinfowler.com/articles/streaming.html"
+      }
+    ]
   },
   {
     "id": "sd_topic_8_storage_0_object_storage",
@@ -5472,10 +6008,22 @@
     "topicId": "sd_topic_8_storage",
     "title": "Object Storage (S3-style)",
     "difficulty": "medium",
+    "description": "Store blobs (files) in a flat namespace with buckets and keys; high durability and scale.",
+    "explanation": "Objects are stored in buckets/containers identified by unique keys. Object storage (e.g., S3) is highly durable and scalable, typically offering eventual consistency (or strong consistency for new objects). No hierarchical file system – flat namespace. Access is via HTTP APIs (GET/PUT). Use for backups, media, and large data sets. Features include versioning (store multiple versions of an object) and lifecycle policies (automatic tiering or deletion).",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 0
+    "order": 0,
+    "links": [
+      {
+        "label": "Amazon S3 Overview",
+        "url": "https://aws.amazon.com/s3/"
+      },
+      {
+        "label": "Azure Blob Storage",
+        "url": "https://azure.microsoft.com/en-us/services/storage/blobs/"
+      }
+    ]
   },
   {
     "id": "sd_topic_8_storage_1_block_storage",
@@ -5483,10 +6031,22 @@
     "topicId": "sd_topic_8_storage",
     "title": "Block vs Object vs File Storage",
     "difficulty": "medium",
+    "description": "Compare block storage (raw volumes), file storage (NFS, SMB), and object storage (S3).",
+    "explanation": "Block storage: provides raw storage volumes to attach to servers (like hard drives), high IOPS, used for databases and OS. File storage: shared file systems (NFS, SMB) with directories, good for multi-writer workloads. Object storage: flat key-value, accessed over HTTP, highly scalable but higher latency. Use block for low-level storage, file for shared file use, object for storing large blobs (images/videos).",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 1
+    "order": 1,
+    "links": [
+      {
+        "label": "AWS - Storage Options",
+        "url": "https://aws.amazon.com/products/storage/"
+      },
+      {
+        "label": "Azure - Storage Types",
+        "url": "https://azure.microsoft.com/en-us/overview/storage/"
+      }
+    ]
   },
   {
     "id": "sd_topic_8_storage_2_blob_storage",
@@ -5494,141 +6054,44 @@
     "topicId": "sd_topic_8_storage",
     "title": "Blob Storage for Large Files",
     "difficulty": "easy",
+    "description": "Store and serve large binary objects (videos, images, backups) with chunking and CDN.",
+    "explanation": "For large files, use object/blob storage with multipart upload: clients upload in chunks to allow resume on failure. Store metadata (content type, etc.) with each object. Serve files via HTTP with range requests (allowing partial downloads). Use a CDN to cache and deliver content globally. Ensure integrity with checksums. Consider archiving or tiering (cold storage) for rarely accessed data. Enable resumable download support (byte-range requests) for video streaming.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 2
+    "order": 2,
+    "links": [
+      {
+        "label": "AWS S3 Multipart Upload",
+        "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html"
+      },
+      {
+        "label": "Azure Large Blobs",
+        "url": "https://docs.microsoft.com/azure/storage/blobs/scalability-performance"
+      }
+    ]
   },
   {
-    "id": "sd_topic_9_design_0_url_shortener",
+    "id": "sd_topic_9_design_38_cqrs",
     "trackId": "system-design",
     "topicId": "sd_topic_9_design",
-    "title": "Design URL Shortener",
-    "difficulty": "medium",
-    "gfgLink": "",
-    "leetcodeLink": "",
-    "youtubeLink": "",
-    "order": 0
-  },
-  {
-    "id": "sd_topic_9_design_1_rate_limiter",
-    "trackId": "system-design",
-    "topicId": "sd_topic_9_design",
-    "title": "Design Rate Limiter",
-    "difficulty": "medium",
-    "gfgLink": "",
-    "leetcodeLink": "",
-    "youtubeLink": "",
-    "order": 1
-  },
-  {
-    "id": "sd_topic_9_design_2_pastebin",
-    "trackId": "system-design",
-    "topicId": "sd_topic_9_design",
-    "title": "Design Pastebin",
-    "difficulty": "medium",
-    "gfgLink": "",
-    "leetcodeLink": "",
-    "youtubeLink": "",
-    "order": 2
-  },
-  {
-    "id": "sd_topic_9_design_3_news_feed",
-    "trackId": "system-design",
-    "topicId": "sd_topic_9_design",
-    "title": "Design News Feed",
+    "title": "CQRS and Event Sourcing",
     "difficulty": "hard",
+    "description": "Separate read and write models; use events as the source of truth.",
+    "explanation": "CQRS (Command Query Responsibility Segregation) uses different models for writes (commands) and reads (queries). Writes go to a command model (often events are recorded), and read data is updated asynchronously. Event Sourcing: store every state-changing event in an append-only log. The current state is the result of replaying events. Together, they provide a full audit trail and decouple read/write concerns. This adds complexity (event versioning, eventual consistency) but is useful for complex domains.",
     "gfgLink": "",
     "leetcodeLink": "",
     "youtubeLink": "",
-    "order": 3
-  },
-  {
-    "id": "sd_topic_9_design_4_chat_system",
-    "trackId": "system-design",
-    "topicId": "sd_topic_9_design",
-    "title": "Design Chat System",
-    "difficulty": "hard",
-    "gfgLink": "",
-    "leetcodeLink": "",
-    "youtubeLink": "",
-    "order": 4
-  },
-  {
-    "id": "sd_topic_9_design_5_autocomplete",
-    "trackId": "system-design",
-    "topicId": "sd_topic_9_design",
-    "title": "Design Search Autocomplete",
-    "difficulty": "medium",
-    "gfgLink": "",
-    "leetcodeLink": "",
-    "youtubeLink": "",
-    "order": 5
-  },
-  {
-    "id": "sd_topic_9_design_6_youtube",
-    "trackId": "system-design",
-    "topicId": "sd_topic_9_design",
-    "title": "Design YouTube",
-    "difficulty": "hard",
-    "gfgLink": "",
-    "leetcodeLink": "",
-    "youtubeLink": "",
-    "order": 6
-  },
-  {
-    "id": "sd_topic_9_design_7_twitter_feed",
-    "trackId": "system-design",
-    "topicId": "sd_topic_9_design",
-    "title": "Design Twitter Feed",
-    "difficulty": "hard",
-    "gfgLink": "",
-    "leetcodeLink": "",
-    "youtubeLink": "",
-    "order": 7
-  },
-  {
-    "id": "sd_topic_9_design_8_notification_system",
-    "trackId": "system-design",
-    "topicId": "sd_topic_9_design",
-    "title": "Design Notification System",
-    "difficulty": "medium",
-    "gfgLink": "",
-    "leetcodeLink": "",
-    "youtubeLink": "",
-    "order": 8
-  },
-  {
-    "id": "sd_topic_9_design_9_tinyurl",
-    "trackId": "system-design",
-    "topicId": "sd_topic_9_design",
-    "title": "Design TinyURL",
-    "difficulty": "medium",
-    "gfgLink": "",
-    "leetcodeLink": "",
-    "youtubeLink": "",
-    "order": 9
-  },
-  {
-    "id": "sd_topic_9_design_10_google_drive",
-    "trackId": "system-design",
-    "topicId": "sd_topic_9_design",
-    "title": "Design Google Drive",
-    "difficulty": "hard",
-    "gfgLink": "",
-    "leetcodeLink": "",
-    "youtubeLink": "",
-    "order": 10
-  },
-  {
-    "id": "sd_topic_9_design_11_distributed_cache",
-    "trackId": "system-design",
-    "topicId": "sd_topic_9_design",
-    "title": "Design Distributed Cache",
-    "difficulty": "hard",
-    "gfgLink": "",
-    "leetcodeLink": "",
-    "youtubeLink": "",
-    "order": 11
+    "order": 38,
+    "links": [
+      {
+        "label": "Martin Fowler - CQRS",
+        "url": "https://martinfowler.com/bliki/CQRS.html"
+      },
+      {
+        "label": "Martin Fowler - Event Sourcing",
+        "url": "https://martinfowler.com/eaaDev/EventSourcing.html"
+      }
+    ]
   }
 ]

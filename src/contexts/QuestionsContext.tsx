@@ -36,26 +36,33 @@ export function QuestionsProvider({ children }: { children: ReactNode }) {
   const fetchQuestions = useCallback(async () => {
     try {
       const snap = await getDocs(collection(db, 'questions'));
-      if (snap.empty) {
-        setQuestions(questionsFallback);
-      } else {
-        const list = snap.docs.map((d) => {
-          const data = d.data();
-          return {
-            id: data.id ?? d.id,
-            trackId: data.trackId ?? '',
-            topicId: data.topicId ?? '',
-            title: data.title ?? '',
-            difficulty: data.difficulty ?? null,
-            gfgLink: data.gfgLink ?? '',
-            leetcodeLink: data.leetcodeLink ?? '',
-            youtubeLink: data.youtubeLink ?? '',
-            order: Number(data.order) ?? 0,
-            public: data.public === undefined ? true : data.public === true,
-          } as Question;
-        });
-        setQuestions(list);
+      const fromFirestore = snap.docs.map((d) => {
+        const data = d.data();
+        return {
+          id: data.id ?? d.id,
+          trackId: data.trackId ?? '',
+          topicId: data.topicId ?? '',
+          title: data.title ?? '',
+          difficulty: data.difficulty ?? null,
+          gfgLink: data.gfgLink ?? '',
+          leetcodeLink: data.leetcodeLink ?? '',
+          youtubeLink: data.youtubeLink ?? '',
+          order: Number(data.order) ?? 0,
+          public: data.public === undefined ? true : data.public === true,
+          description: data.description ?? undefined,
+          explanation: data.explanation ?? undefined,
+          links: Array.isArray(data.links) ? data.links : undefined,
+        } as Question;
+      });
+      const firestoreById = new Map(fromFirestore.map((q) => [q.id, q]));
+      // Merge: use local JSON as full list, override with Firestore when present (so all questions from JSON appear)
+      const merged = questionsFallback.map((q) => firestoreById.get(q.id) ?? q);
+      // Append any questions that exist in Firestore but not in local JSON (e.g. admin-created)
+      const fallbackIds = new Set(questionsFallback.map((q) => q.id));
+      for (const q of fromFirestore) {
+        if (!fallbackIds.has(q.id)) merged.push(q);
       }
+      setQuestions(merged);
     } catch (err) {
       console.error('[Questions] Firestore load failed, using fallback:', err);
       setQuestions(questionsFallback);
