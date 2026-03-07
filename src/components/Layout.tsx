@@ -19,6 +19,9 @@ export function Layout() {
   const nav = [
     { to: '/', label: 'Dashboard' },
     { to: '/cumulative', label: 'Cumulative' },
+    { to: '/revise', label: 'Revise' },
+    { to: '/pick-one', label: 'Pick one' },
+    { to: '/mock', label: 'Mock' },
     { to: '/bookmarks', label: 'Bookmarks' },
     { to: '/notes', label: 'Notes' },
     { to: '/analytics', label: 'Analytics' },

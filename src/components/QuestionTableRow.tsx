@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { LeetCodeIcon, GFGIcon, YouTubeIcon, CheckCircleIcon, NotesIcon } from './Icons';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { useActivity } from '../hooks/useActivity';
+import { usePrefs } from '../hooks/usePrefs';
 import { useNotes } from '../hooks/useNotes';
 import { NoteEditor } from './NoteEditor';
 import { useState, useEffect, useRef } from 'react';
@@ -20,6 +21,7 @@ export function QuestionTableRow({ q, showTopic, topicName, colSpan }: QuestionT
   const { user } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const { isSolved, markDone, unmarkDone } = useActivity();
+  const { toggleMarkForRevision, isMarkedForRevision } = usePrefs();
   const { getNote, setNote, loadNote } = useNotes();
   const [showNote, setShowNote] = useState(false);
   const [noteContent, setNoteContent] = useState('');
@@ -29,6 +31,7 @@ export function QuestionTableRow({ q, showTopic, topicName, colSpan }: QuestionT
 
   const bookmarked = isBookmarked(q.id);
   const solved = isSolved(q.id);
+  const markedForRevision = isMarkedForRevision(q.id);
   const note = getNote(q.id);
   const canSaveProgress = !!user;
 
@@ -155,6 +158,17 @@ export function QuestionTableRow({ q, showTopic, topicName, colSpan }: QuestionT
             >
               <CheckCircleIcon className="w-4 h-4" filled={solved} />
             </button>
+            {canSaveProgress && solved && (
+              <button
+                type="button"
+                onClick={() => toggleMarkForRevision(q.id)}
+                className={`p-1.5 rounded flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${markedForRevision ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'} hover:bg-[var(--border)]`}
+                title={markedForRevision ? 'Remove from revision list' : 'Mark for revision'}
+                aria-label={markedForRevision ? 'Remove from revision list' : 'Mark for revision'}
+              >
+                <span className="text-sm font-medium" aria-hidden>↻</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setShowNote(!showNote)}

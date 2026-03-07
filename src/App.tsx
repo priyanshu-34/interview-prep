@@ -10,6 +10,9 @@ import { Dashboard } from './pages/Dashboard';
 import { TopicDetail } from './pages/TopicDetail';
 import { Cumulative } from './pages/Cumulative';
 import { Bookmarks } from './pages/Bookmarks';
+import { Revise } from './pages/Revise';
+import { PickOne } from './pages/PickOne';
+import { MockInterview } from './pages/MockInterview';
 import { Notes } from './pages/Notes';
 import { Analytics } from './pages/Analytics';
 import { Admin } from './pages/Admin';
@@ -38,6 +41,9 @@ function App() {
                       <Route path="topic/:topicId" element={<TopicDetail />} />
                       <Route path="cumulative" element={<Cumulative />} />
                       <Route path="bookmarks" element={<Bookmarks />} />
+                      <Route path="revise" element={<Revise />} />
+                      <Route path="pick-one" element={<PickOne />} />
+                      <Route path="mock" element={<MockInterview />} />
                       <Route path="notes" element={<Notes />} />
                       <Route path="analytics" element={<Analytics />} />
                       <Route path="admin" element={<AdminGuard><Admin /></AdminGuard>} />

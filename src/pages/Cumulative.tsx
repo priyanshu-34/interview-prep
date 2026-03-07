@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useTrack } from '../contexts/TrackContext';
 import { useQuestions } from '../contexts/QuestionsContext';
 import { getTopicById } from '../data';
@@ -10,16 +11,22 @@ import { QuestionTableRow } from '../components/QuestionTableRow';
 const CUMULATIVE_TABLE_COLS = 5;
 
 export function Cumulative() {
+  const [searchParams] = useSearchParams();
+  const topicFromUrl = searchParams.get('topic') ?? '';
   const { trackId } = useTrack();
   const { getQuestionsByTrack } = useQuestions();
   const questions = getQuestionsByTrack(trackId);
   const { isBookmarked } = useBookmarks();
   const { isSolved } = useActivity();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterTopic, setFilterTopic] = useState<string>('');
+  const [filterTopic, setFilterTopic] = useState<string>(topicFromUrl);
   const [filterSolved, setFilterSolved] = useState<'all' | 'solved' | 'unsolved'>('all');
   const [filterBookmarked, setFilterBookmarked] = useState(false);
   const [filterDifficulty, setFilterDifficulty] = useState<string>('');
+
+  useEffect(() => {
+    if (topicFromUrl && filterTopic !== topicFromUrl) setFilterTopic(topicFromUrl);
+  }, [topicFromUrl]);
 
   const topicIds = useMemo(() => [...new Set(questions.map((q) => q.topicId))], [questions]);
 

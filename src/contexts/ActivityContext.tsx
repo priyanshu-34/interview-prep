@@ -61,6 +61,8 @@ interface ActivityContextValue {
   solvedIds: string[];
   /** Date string (YYYY-MM-DD) -> count for heatmap; from single load, updated optimistically */
   activityDays: Record<string, number>;
+  /** questionId -> last date (YYYY-MM-DD) when marked done; for revision queue */
+  lastDoneByQuestion: Record<string, string>;
   loading: boolean;
 }
 
@@ -70,12 +72,14 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [solvedSet, setSolvedSet] = useState<Set<string>>(new Set());
   const [activityDays, setActivityDays] = useState<Record<string, number>>({});
+  const [lastDoneByQuestion, setLastDoneByQuestion] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) {
       setSolvedSet(new Set());
       setActivityDays({});
+      setLastDoneByQuestion({});
       setLoading(false);
       return;
     }
@@ -85,13 +89,21 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         if (cancelled) return;
         const ids = new Set<string>();
         const days: Record<string, number> = {};
+        const lastDone: Record<string, string> = {};
         snap.docs.forEach((d) => {
+          const dateStr = d.id;
           const arr = d.data()?.questionIds;
-          if (Array.isArray(arr)) arr.forEach((id: string) => ids.add(id));
-          days[d.id] = Number(d.data()?.count) || 0;
+          if (Array.isArray(arr)) {
+            arr.forEach((id: string) => {
+              ids.add(id);
+              if (!lastDone[id] || dateStr > lastDone[id]) lastDone[id] = dateStr;
+            });
+          }
+          days[dateStr] = Number(d.data()?.count) || 0;
         });
         setSolvedSet(ids);
         setActivityDays(days);
+        setLastDoneByQuestion(lastDone);
         const docs = Object.entries(days).map(([id, count]) => ({ id, count }));
         try {
           await updateCachedStats(db, user.uid, ids.size, docs);
@@ -117,6 +129,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       const ref = doc(db, 'users', user.uid, 'activity', d);
       setSolvedSet((prev) => new Set(prev).add(questionId));
       setActivityDays((prev) => ({ ...prev, [d]: (prev[d] ?? 0) + 1 }));
+      setLastDoneByQuestion((prev) => ({ ...prev, [questionId]: d }));
       try {
         const snap = await getDoc(ref);
         const data = snap.data();
@@ -146,6 +159,11 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
           const v = (next[d] ?? 0) - 1;
           if (v <= 0) delete next[d];
           else next[d] = v;
+          return next;
+        });
+        setLastDoneByQuestion((prev) => {
+          const next = { ...prev };
+          delete next[questionId];
           return next;
         });
       }
@@ -201,9 +219,16 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         console.error('[Activity] Firestore unmarkDone failed:', err);
         setSolvedSet((prev) => new Set(prev).add(questionId));
         setActivityDays((prev) => ({ ...prev, [d]: (prev[d] ?? 0) + 1 }));
+        setLastDoneByQuestion((prev) => {
+          const prevDate = lastDoneByQuestion[questionId];
+          if (prevDate) return { ...prev, [questionId]: prevDate };
+          const next = { ...prev };
+          delete next[questionId];
+          return next;
+        });
       }
     },
-    [user, activityDays, solvedSet.size]
+    [user, activityDays, solvedSet.size, lastDoneByQuestion]
   );
 
   const isSolved = useCallback(
@@ -217,6 +242,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
     isSolved,
     solvedIds: Array.from(solvedSet),
     activityDays,
+    lastDoneByQuestion,
     loading,
   };
 
