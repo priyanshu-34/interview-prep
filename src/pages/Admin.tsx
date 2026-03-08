@@ -403,7 +403,7 @@ function ScriptRunnerModal({ questions, getTopicsByTrack, onClose }: ScriptRunne
         'data',
         'log',
         `"use strict";\n${scriptText}`
-      ) as (data: typeof data, log: (msg: unknown) => void) => unknown;
+      ) as (data: { topics: { id: string; trackId: string; name: string; order: number }[]; questions: Question[] }, log: (msg: unknown) => void) => unknown;
       const result = fn(data, log);
       setOutputLines(lines);
       setReturnValue(result);
