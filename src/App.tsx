@@ -18,6 +18,8 @@ import { Notes } from './pages/Notes';
 import { Analytics } from './pages/Analytics';
 import { Admin } from './pages/Admin';
 import { QuestionDetail } from './pages/QuestionDetail';
+import { Resume } from './pages/Resume';
+import { ResumeJobDetail } from './pages/ResumeJobDetail';
 import { useAuth } from './contexts/AuthContext';
 import { isAdmin } from './lib/admin';
 
@@ -49,6 +51,8 @@ function App() {
                       <Route path="pick-one" element={<PickOne />} />
                       <Route path="mock" element={<MockInterview />} />
                       <Route path="notes" element={<Notes />} />
+                      <Route path="resume" element={<Resume />} />
+                      <Route path="resume/job/:jobId" element={<ResumeJobDetail />} />
                       <Route path="analytics" element={<Analytics />} />
                       <Route path="admin" element={<AdminGuard><Admin /></AdminGuard>} />
                     </Route>

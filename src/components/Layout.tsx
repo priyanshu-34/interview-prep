@@ -19,6 +19,7 @@ function navMore(showAdmin: boolean) {
   return [
     { to: '/bookmarks', label: 'Bookmarks' },
     { to: '/notes', label: 'Notes' },
+    { to: '/resume', label: 'Resume' },
     { to: '/analytics', label: 'Analytics' },
     ...(showAdmin ? [{ to: '/admin', label: 'Admin' }] : []),
   ];
