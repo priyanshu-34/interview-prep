@@ -145,21 +145,66 @@ function validLatex(out: string, base: string): boolean {
     out.length >= base.length * 0.5
   );
 }
-function diffKeywords(base: string, tailored: string): string[] {
-  const tok = (s: string) =>
-    new Set(
-      s.toLowerCase().replace(/[^a-z0-9+#.\s]/g, ' ').split(/\s+/).filter((w) => w.length > 2)
-    );
-  const b = tok(base);
-  return [...tok(tailored)].filter((w) => !b.has(w)).slice(0, 30);
+const ANALYZE_SYSTEM = `You are an ATS (applicant tracking system) evaluator. You receive a job description and two versions of a candidate's resume: BEFORE and AFTER tailoring.
+Do three things and return ONLY JSON:
+1. Score how well each version matches the JD for keyword/skill relevance an ATS would measure, 0-100 (be realistic, not generous).
+2. Summarize the concrete changes made (which skills/keywords were surfaced, which wording was aligned to the JD). Short bullet phrases.
+3. List the JD keywords/skills now emphasized in AFTER.
+Resumes may be LaTeX — read the human-readable content, ignore commands.
+{"scoreBefore":<int 0-100>,"scoreAfter":<int 0-100>,"summary":["<change>", ...],"keywordsAdded":["<keyword>", ...]}`;
+
+export interface TailorAnalysis {
+  scoreBefore: number;
+  scoreAfter: number;
+  summary: string[];
+  keywordsAdded: string[];
+}
+
+function clampScore(v: unknown): number {
+  const n = typeof v === 'number' ? v : Number(v);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+async function analyzeTailoring(
+  jdText: string,
+  before: string,
+  after: string
+): Promise<TailorAnalysis> {
+  const content = await chat(
+    [
+      { role: 'system', content: ANALYZE_SYSTEM },
+      {
+        role: 'user',
+        content:
+          `JOB DESCRIPTION:\n${jdText.slice(0, 6000)}\n\n` +
+          `BEFORE:\n${before.slice(0, 7000)}\n\n` +
+          `AFTER:\n${after.slice(0, 7000)}`,
+      },
+    ],
+    { json: true, temperature: 0 }
+  );
+  let p: Record<string, unknown> = {};
+  try { p = JSON.parse(content); } catch { /* ignore */ }
+  const strArr = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x) => typeof x === 'string') : []);
+  return {
+    scoreBefore: clampScore(p.scoreBefore),
+    scoreAfter: clampScore(p.scoreAfter),
+    summary: strArr(p.summary).slice(0, 12),
+    keywordsAdded: strArr(p.keywordsAdded).slice(0, 30),
+  };
 }
 
 export interface TailorLatexResult {
   latexSource: string;
   addedKeywords: string[];
+  summary: string[];
+  atsBefore: number;
+  atsAfter: number;
 }
 
-/** Tailor a LaTeX resume: edit wording only, preserve formatting. */
+/** Tailor a LaTeX resume: edit wording only, preserve formatting. Also returns
+ * an ATS score before/after and a human-readable change summary. */
 export async function tailorLatex(
   baseSource: string,
   job: { title: string; company: string; jdText: string }
@@ -181,11 +226,19 @@ export async function tailorLatex(
     )
   );
   const latexSource = validLatex(out, baseSource) ? out : baseSource;
-  return { latexSource, addedKeywords: diffKeywords(baseSource, latexSource) };
+  const analysis = await analyzeTailoring(job.jdText || '', baseSource, latexSource);
+  return {
+    latexSource,
+    addedKeywords: analysis.keywordsAdded,
+    summary: analysis.summary,
+    atsBefore: analysis.scoreBefore,
+    atsAfter: analysis.scoreAfter,
+  };
 }
 
-const CHECKLIST_SYSTEM = `You are a resume coach. Compare a candidate's resume text to a job description and produce a keyword/edit CHECKLIST to improve ATS match WITHOUT fabricating anything. Return ONLY JSON:
+const CHECKLIST_SYSTEM = `You are a resume coach + ATS evaluator. Compare a candidate's resume text to a job description. Give the current ATS match score and a keyword/edit CHECKLIST to improve it WITHOUT fabricating anything. Return ONLY JSON:
 {
+  "score": <int 0-100 current ATS keyword/skill match, be realistic>,
   "missingKeywords": ["<JD keyword/skill not in the resume but plausibly true for the candidate>"],
   "presentKeywords": ["<important JD keyword already in the resume>"],
   "suggestions": [{"where":"<section/bullet>","change":"<concrete rephrasing that adds JD language to an EXISTING point>"}],
@@ -219,7 +272,12 @@ export async function pdfChecklist(
         .filter((s) => s && (typeof s.where === 'string' || typeof s.change === 'string'))
         .map((s) => ({ where: String(s.where ?? ''), change: String(s.change ?? '') }))
     : [];
+  const score = (() => {
+    const n = typeof p.score === 'number' ? p.score : Number(p.score);
+    return Number.isFinite(n) ? Math.max(0, Math.min(100, Math.round(n))) : 0;
+  })();
   return {
+    score,
     missingKeywords: strArr(p.missingKeywords),
     presentKeywords: strArr(p.presentKeywords),
     suggestions,

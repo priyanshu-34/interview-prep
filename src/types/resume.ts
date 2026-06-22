@@ -20,6 +20,7 @@ export interface ChecklistSuggestion {
 }
 
 export interface Checklist {
+  score: number; // current ATS match 0-100
   missingKeywords: string[];
   presentKeywords: string[];
   suggestions: ChecklistSuggestion[];
@@ -29,7 +30,10 @@ export interface Checklist {
 export interface LatexVariant {
   format: 'latex';
   latexSource: string;
-  addedKeywords: string[];
+  addedKeywords: string[]; // JD keywords now emphasized (from the model)
+  summary: string[]; // human-readable list of what changed
+  atsBefore: number; // ATS match score 0-100 before tailoring
+  atsAfter: number; // ATS match score 0-100 after tailoring
 }
 
 export interface ChecklistVariant {

@@ -43,7 +43,14 @@ export function ResumeJobDetail() {
     try {
       if (base.format === 'latex' && base.latexSource) {
         const r = await tailorLatex(base.latexSource, { title: job!.title, company: job!.company, jdText: job!.jdText });
-        await setJobVariant(job!.id, { format: 'latex', latexSource: r.latexSource, addedKeywords: r.addedKeywords });
+        await setJobVariant(job!.id, {
+          format: 'latex',
+          latexSource: r.latexSource,
+          addedKeywords: r.addedKeywords,
+          summary: r.summary,
+          atsBefore: r.atsBefore,
+          atsAfter: r.atsAfter,
+        });
         setMsg('Tailored. Formatting preserved — only keywords/wording changed.');
       } else {
         const checklist = await pdfChecklist(base.rawText, { title: job!.title, company: job!.company, jdText: job!.jdText });
@@ -157,14 +164,39 @@ export function ResumeJobDetail() {
     return (
       <div className="mt-4 rounded-lg border border-emerald-700/40 bg-emerald-900/20 p-4">
         <p className="text-sm font-medium text-emerald-300">Tailored resume ready — formatting preserved, only keywords/wording changed.</p>
-        {variant.addedKeywords.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {variant.addedKeywords.map((k) => (
-              <span key={k} className="rounded-full bg-emerald-900/50 px-2 py-0.5 text-xs text-emerald-200">{k}</span>
-            ))}
+
+        <div className="mt-3 flex items-center gap-4">
+          <ScoreBadge label="ATS before" value={variant.atsBefore} />
+          <span className="text-[var(--text-muted)]">→</span>
+          <ScoreBadge label="ATS after" value={variant.atsAfter} highlight />
+          {variant.atsAfter > variant.atsBefore && (
+            <span className="rounded-full bg-emerald-900/50 px-2 py-1 text-xs font-medium text-emerald-200">
+              +{variant.atsAfter - variant.atsBefore} match
+            </span>
+          )}
+        </div>
+
+        {variant.summary.length > 0 && (
+          <div className="mt-3">
+            <h3 className="text-sm font-medium text-[var(--text)]">What changed</h3>
+            <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-[var(--text-muted)]">
+              {variant.summary.map((s, i) => <li key={i}>{s}</li>)}
+            </ul>
           </div>
         )}
-        <div className="mt-3 flex flex-wrap gap-2">
+
+        {variant.addedKeywords.length > 0 && (
+          <div className="mt-3">
+            <h3 className="text-sm font-medium text-[var(--text)]">JD keywords emphasized</h3>
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              {variant.addedKeywords.map((k) => (
+                <span key={k} className="rounded-full bg-emerald-900/50 px-2 py-0.5 text-xs text-emerald-200">{k}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="mt-4 flex flex-wrap gap-2">
           <button className={btn} onClick={() => onOverleaf(variant.latexSource)}>Open in Overleaf</button>
           <button className={btnGhost} onClick={() => onDownload(variant.latexSource)}>Download .tex</button>
           <button className={btnGhost} disabled={wasmBusy} onClick={() => onWasm(variant.latexSource)}>
@@ -176,10 +208,24 @@ export function ResumeJobDetail() {
     );
   }
 
+  function ScoreBadge({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
+    const color = value >= 80 ? 'text-green-400' : value >= 60 ? 'text-amber-400' : value >= 40 ? 'text-orange-400' : 'text-red-400';
+    return (
+      <div className={`rounded-lg border px-3 py-2 text-center ${highlight ? 'border-emerald-600/60 bg-emerald-900/30' : 'border-[var(--border)]'}`}>
+        <div className={`text-2xl font-bold ${color}`}>{value}</div>
+        <div className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">{label}</div>
+      </div>
+    );
+  }
+
   function ChecklistResult({ variant }: { variant: ChecklistVariant }) {
     const c = variant.checklist;
     return (
       <div className="mt-4 space-y-4">
+        <div className="flex items-center gap-3">
+          <ScoreBadge label="ATS match" value={c.score} highlight />
+          <p className="text-sm text-[var(--text-muted)]">Apply the checklist below in your editor to raise this.</p>
+        </div>
         <Section title="Add these keywords (if true for you)" items={c.missingKeywords} tone="amber" />
         {c.suggestions.length > 0 && (
           <div>
