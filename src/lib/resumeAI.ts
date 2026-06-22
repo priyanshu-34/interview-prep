@@ -8,11 +8,81 @@
  * personal/local app; do not deploy publicly with a real key.
  */
 
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from './firebase';
 import type { Checklist, ChecklistSuggestion } from '../types/resume';
 
 const CHAT_URL = 'https://api.openai.com/v1/chat/completions';
 // gpt-4o-mini supports vision (images) and is inexpensive.
 const MODEL = 'gpt-4o-mini';
+
+/* -------------------- Editable prompts (admin) -------------------- */
+// Defaults live here; admins can override them + add custom tailoring prompts,
+// stored in Firestore at config/resumePrompts (admin-writable per firestore.rules).
+
+export interface CustomPrompt {
+  id: string;
+  name: string;
+  prompt: string;
+}
+export interface ResumePrompts {
+  tailor: string;
+  jd: string;
+  checklist: string;
+  analyze: string;
+  custom: CustomPrompt[];
+}
+
+const PROMPTS_REF = 'resumePrompts';
+let promptsCache: ResumePrompts | null = null;
+
+function defaults(): ResumePrompts {
+  return {
+    tailor: DEFAULT_TAILOR_PROMPT,
+    jd: DEFAULT_JD_PROMPT,
+    checklist: DEFAULT_CHECKLIST_PROMPT,
+    analyze: DEFAULT_ANALYZE_PROMPT,
+    custom: [],
+  };
+}
+
+/** Load prompts from Firestore (cached), falling back to defaults. */
+export async function loadResumePrompts(force = false): Promise<ResumePrompts> {
+  if (promptsCache && !force) return promptsCache;
+  const d = defaults();
+  try {
+    const snap = await getDoc(doc(db, 'config', PROMPTS_REF));
+    if (snap.exists()) {
+      const v = snap.data() as Partial<ResumePrompts>;
+      promptsCache = {
+        tailor: typeof v.tailor === 'string' && v.tailor.trim() ? v.tailor : d.tailor,
+        jd: typeof v.jd === 'string' && v.jd.trim() ? v.jd : d.jd,
+        checklist: typeof v.checklist === 'string' && v.checklist.trim() ? v.checklist : d.checklist,
+        analyze: typeof v.analyze === 'string' && v.analyze.trim() ? v.analyze : d.analyze,
+        custom: Array.isArray(v.custom)
+          ? v.custom
+              .filter((c): c is CustomPrompt => !!c && typeof c.name === 'string' && typeof c.prompt === 'string')
+              .map((c) => ({ id: String(c.id || c.name), name: c.name, prompt: c.prompt }))
+          : [],
+      };
+      return promptsCache;
+    }
+  } catch {
+    // keep defaults
+  }
+  promptsCache = d;
+  return promptsCache;
+}
+
+/** Save prompts to Firestore (admin only, enforced by rules) and update cache. */
+export async function saveResumePrompts(p: ResumePrompts): Promise<void> {
+  await setDoc(doc(db, 'config', PROMPTS_REF), p);
+  promptsCache = p;
+}
+
+export function getDefaultResumePrompts(): ResumePrompts {
+  return defaults();
+}
 
 function apiKey(): string | null {
   const k = import.meta.env?.VITE_OPENAI_API_KEY;
@@ -74,8 +144,8 @@ export interface ParsedJD {
   jdText: string;
 }
 
-const JD_SYSTEM = `You extract structured info from a job description. Return ONLY a JSON object:
-{"title":"<role title>","company":"<company or empty>","location":"<location or empty>","jdText":"<the full job description as plain text>"}`;
+export const DEFAULT_JD_PROMPT = `You extract structured information from a job description (which may be raw text or read from a screenshot image). Capture the role's title, company, and location accurately, and put the COMPLETE job description — every requirement, responsibility, skill, tool, and keyword, verbatim and unsummarised — into jdText so it can be used for ATS keyword matching. Do not omit or paraphrase requirements; preserve the employer's exact terminology. Return ONLY this JSON object:
+{"title":"<role title>","company":"<company or empty>","location":"<location or empty>","jdText":"<the full, verbatim job description as plain text>"}`;
 
 function coerceJD(raw: string): ParsedJD {
   let p: Record<string, unknown> = {};
@@ -95,9 +165,10 @@ export async function jdFromText(text: string): Promise<ParsedJD> {
     const firstLine = text.split('\n').find((l) => l.trim()) || 'Job';
     return { title: firstLine.slice(0, 80), company: '', location: '', jdText: text.trim() };
   }
+  const prompts = await loadResumePrompts();
   const content = await chat(
     [
-      { role: 'system', content: JD_SYSTEM },
+      { role: 'system', content: prompts.jd },
       { role: 'user', content: `Extract from this job description:\n\n${text.slice(0, 12000)}` },
     ],
     { json: true, temperature: 0 }
@@ -108,9 +179,10 @@ export async function jdFromText(text: string): Promise<ParsedJD> {
 /** Parse a JD from a screenshot image (data URL base64). Requires AI. */
 export async function jdFromImage(dataUrl: string): Promise<ParsedJD> {
   if (!isResumeAIEnabled()) throw new Error('Reading a JD image needs VITE_OPENAI_API_KEY.');
+  const prompts = await loadResumePrompts();
   const content = await chat(
     [
-      { role: 'system', content: JD_SYSTEM },
+      { role: 'system', content: prompts.jd },
       {
         role: 'user',
         content: [
@@ -124,13 +196,31 @@ export async function jdFromImage(dataUrl: string): Promise<ParsedJD> {
   return coerceJD(content);
 }
 
-const LATEX_SYSTEM = `You tailor a LaTeX resume to a job description.
+export const DEFAULT_TAILOR_PROMPT = `You are an elite technical recruiter, certified ATS (Applicant Tracking System) optimization specialist, and professional resume writer. You tailor a candidate's LaTeX resume to ONE specific job description so it ranks as high as possible in ATS keyword screening AND impresses the human recruiter who reads it next — without ever fabricating anything.
+
+HOW MODERN ATS SCORE (optimize for this):
+- They parse the resume to text and match it against the JD: exact keywords first, then close semantic matches, plus job-title alignment and a skills taxonomy (tool/skill + seniority).
+- Hard skills, tools, frameworks, and exact role terminology carry the MOST weight; then title alignment; then everything else.
+- ATS frequently do NOT recognise synonyms, so MIRROR the JD's exact wording for any skill the candidate genuinely has.
+- Both ATS and recruiters reward "achievement density": bullets with concrete numbers/outcomes.
+
+YOUR METHOD:
+1. Extract from the JD: required hard skills/tools/technologies, methodologies, the target job title, core responsibilities, and which items are must-haves vs nice-to-haves.
+2. Map each JD requirement to REAL evidence already present in the resume.
+3. For every genuine match, align the resume's wording to the JD's exact terminology (e.g. if the JD says "CI/CD", "REST APIs", "event-driven", use those exact phrases). Where natural, include an acronym and its expansion once, e.g. "CI/CD (continuous integration / continuous delivery)".
+4. Reorder the skills/technologies list so the most JD-relevant items appear first.
+5. Weave the important keywords into EXISTING bullet points in natural context — never a keyword dump. Aim for each key term to appear ~2–3 times across the resume in different, truthful contexts.
+6. Strengthen bullets with strong action verbs and KEEP every existing quantified result. Never invent, inflate, or alter numbers/metrics.
+7. If the structure allows reordering within a section, surface the most JD-relevant experience/projects higher.
+8. Focus on elevating relevant content; leave genuinely irrelevant lines intact rather than deleting them.
+
 ABSOLUTE RULES:
-1. Return ONLY the complete LaTeX document — no commentary, no markdown fences.
-2. Preserve formatting EXACTLY: never change \\documentclass, the preamble, packages, commands, custom macros, environments, spacing, margins, or structure.
-3. Edit ONLY human-readable text: reorder/inject skills + keywords to match the JD, and lightly rephrase existing bullet wording to mirror the JD's language.
-4. NEVER invent new skills, employers, projects, titles, dates, or metrics.
-5. Output MUST still compile (balanced braces/environments).`;
+- Return ONLY the complete, compilable LaTeX document. No commentary, no explanation, no markdown code fences.
+- Preserve formatting EXACTLY. Do NOT change \\documentclass, the preamble, packages, custom macros/commands, environments, margins, spacing, fonts, colours, section ordering, or any layout. Change ONLY the human-readable text inside existing commands/bullets.
+- NEVER fabricate or imply skills, tools, employers, titles, dates, degrees, certifications, or metrics the candidate does not already have. If a JD keyword has no basis in the resume, DO NOT add it.
+- No keyword stuffing: every edit must read naturally and truthfully to a human recruiter.
+- Keep the resume's length roughly the same; do not overflow onto a new page.
+- The output MUST still compile (balanced braces and environments).`;
 
 function unfence(t: string): string {
   const m = t.match(/```(?:latex|tex)?\s*([\s\S]*?)```/);
@@ -145,12 +235,23 @@ function validLatex(out: string, base: string): boolean {
     out.length >= base.length * 0.5
   );
 }
-const ANALYZE_SYSTEM = `You are an ATS (applicant tracking system) evaluator. You receive a job description and two versions of a candidate's resume: BEFORE and AFTER tailoring.
-Do three things and return ONLY JSON:
-1. Score how well each version matches the JD for keyword/skill relevance an ATS would measure, 0-100 (be realistic, not generous).
-2. Summarize the concrete changes made (which skills/keywords were surfaced, which wording was aligned to the JD). Short bullet phrases.
-3. List the JD keywords/skills now emphasized in AFTER.
-Resumes may be LaTeX — read the human-readable content, ignore commands.
+export const DEFAULT_ANALYZE_PROMPT = `You are an ATS (Applicant Tracking System) scoring engine combined with a senior technical recruiter. You receive a job description and TWO versions of a candidate's resume: BEFORE and AFTER tailoring. Resumes may be in LaTeX — read the human-readable content and ignore LaTeX commands.
+
+SCORING METHOD — apply the SAME method to BEFORE and AFTER, each scored against the JD (0-100):
+1. Identify the JD's must-have hard skills/tools/technologies, core responsibilities, required job title, and seniority/years.
+2. Compute weighted coverage:
+   - ~50%: required hard skills/tools/keywords present (exact wording = full credit, clear semantic match = partial, missing = none; must-haves weigh more than nice-to-haves).
+   - ~20%: job-title / role alignment.
+   - ~15%: responsibilities / domain overlap.
+   - ~10%: seniority / experience-level fit.
+   - ~5%: achievement density (quantified outcomes).
+3. Calibrate realistically and do NOT inflate: 85-100 = strong, likely to pass ATS; 70-84 = good; 50-69 = partial; below 50 = weak. An off-target or generic resume must score low.
+
+Then produce:
+- "summary": 3-8 short, concrete bullet phrases of what the tailoring changed (skills surfaced, JD wording mirrored, bullets aligned, keywords added).
+- "keywordsAdded": the specific JD keywords/skills now present or emphasised in AFTER that were weak or absent in BEFORE.
+
+Return ONLY this JSON object, nothing else:
 {"scoreBefore":<int 0-100>,"scoreAfter":<int 0-100>,"summary":["<change>", ...],"keywordsAdded":["<keyword>", ...]}`;
 
 export interface TailorAnalysis {
@@ -171,9 +272,10 @@ async function analyzeTailoring(
   before: string,
   after: string
 ): Promise<TailorAnalysis> {
+  const prompts = await loadResumePrompts();
   const content = await chat(
     [
-      { role: 'system', content: ANALYZE_SYSTEM },
+      { role: 'system', content: prompts.analyze },
       {
         role: 'user',
         content:
@@ -207,18 +309,25 @@ export interface TailorLatexResult {
  * an ATS score before/after and a human-readable change summary. */
 export async function tailorLatex(
   baseSource: string,
-  job: { title: string; company: string; jdText: string }
+  job: { title: string; company: string; jdText: string },
+  opts?: { systemPrompt?: string; extraInstructions?: string }
 ): Promise<TailorLatexResult> {
   if (!isResumeAIEnabled()) throw new Error('Tailoring needs VITE_OPENAI_API_KEY.');
+  const prompts = await loadResumePrompts();
+  const systemPrompt = (opts?.systemPrompt && opts.systemPrompt.trim()) || prompts.tailor;
+  const tweaks = (opts?.extraInstructions || '').trim();
   const out = unfence(
     await chat(
       [
-        { role: 'system', content: LATEX_SYSTEM },
+        { role: 'system', content: systemPrompt },
         {
           role: 'user',
           content:
             `JOB: ${job.title} @ ${job.company || '—'}\n` +
             `JOB DESCRIPTION:\n${(job.jdText || '').slice(0, 8000)}\n\n` +
+            (tweaks
+              ? `ADDITIONAL INSTRUCTIONS FROM THE CANDIDATE (apply these tweaks, but never violate the absolute rules and never fabricate):\n${tweaks}\n\n`
+              : '') +
             `Tailor this resume LaTeX (return the full tailored .tex):\n\n${baseSource}`,
         },
       ],
@@ -236,13 +345,24 @@ export async function tailorLatex(
   };
 }
 
-const CHECKLIST_SYSTEM = `You are a resume coach + ATS evaluator. Compare a candidate's resume text to a job description. Give the current ATS match score and a keyword/edit CHECKLIST to improve it WITHOUT fabricating anything. Return ONLY JSON:
+export const DEFAULT_CHECKLIST_PROMPT = `You are an ATS (Applicant Tracking System) evaluator and expert resume coach. Compare a candidate's resume text to a job description, score the current ATS match, and produce an actionable checklist to raise it — WITHOUT fabricating anything.
+
+SCORING METHOD (0-100, realistic, do NOT inflate):
+~50% required hard skills/tools/keywords present (exact wording = full credit, clear semantic match = partial, missing = none; must-haves weigh more), ~20% job-title/role alignment, ~15% responsibilities/domain overlap, ~10% seniority fit, ~5% quantified achievements. 85+ = strong, 70-84 = good, 50-69 = partial, below 50 = weak.
+
+GUIDELINES:
+- "missingKeywords": important JD skills/keywords absent from the resume that are plausibly TRUE for this candidate and should be added — use the JD's exact wording.
+- "presentKeywords": key JD keywords already in the resume.
+- "suggestions": concrete edits to EXISTING bullets/sections that weave in JD language and, where genuine, add measurable outcomes. Never invent numbers or experience.
+- "doNotAdd": JD keywords the resume shows NO evidence for — explicitly warn the candidate not to claim these.
+
+Return ONLY this JSON object:
 {
-  "score": <int 0-100 current ATS keyword/skill match, be realistic>,
-  "missingKeywords": ["<JD keyword/skill not in the resume but plausibly true for the candidate>"],
-  "presentKeywords": ["<important JD keyword already in the resume>"],
-  "suggestions": [{"where":"<section/bullet>","change":"<concrete rephrasing that adds JD language to an EXISTING point>"}],
-  "doNotAdd": ["<JD keyword the candidate shows no evidence for — do NOT claim it>"]
+  "score": <int 0-100>,
+  "missingKeywords": ["..."],
+  "presentKeywords": ["..."],
+  "suggestions": [{"where":"<section/bullet>","change":"<concrete rephrasing>"}],
+  "doNotAdd": ["..."]
 }`;
 
 /** Build a keyword/edit checklist for a PDF (text) resume. */
@@ -251,9 +371,10 @@ export async function pdfChecklist(
   job: { title: string; company: string; jdText: string }
 ): Promise<Checklist> {
   if (!isResumeAIEnabled()) throw new Error('The keyword checklist needs VITE_OPENAI_API_KEY.');
+  const prompts = await loadResumePrompts();
   const content = await chat(
     [
-      { role: 'system', content: CHECKLIST_SYSTEM },
+      { role: 'system', content: prompts.checklist },
       {
         role: 'user',
         content:

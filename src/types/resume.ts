@@ -55,4 +55,5 @@ export interface ResumeJob {
   createdAt: string; // ISO
   appliedAt: string | null;
   variant: ResumeVariant | null;
+  tweaks?: string; // free-text per-job tailoring instructions
 }

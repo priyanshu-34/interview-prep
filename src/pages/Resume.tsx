@@ -3,12 +3,16 @@ import { Link } from 'react-router-dom';
 import { useResume } from '../hooks/useResume';
 import { jdFromText, jdFromImage, isResumeAIEnabled } from '../lib/resumeAI';
 import { extractPdfText } from '../lib/pdfText';
+import { ResumePromptsAdmin } from '../components/ResumePromptsAdmin';
 import type { BaseResume, JobStatus } from '../types/resume';
 import { JOB_STATUSES } from '../types/resume';
 
 const card = 'rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 sm:p-6';
-const input = 'w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--text)]';
-const btn = 'rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50';
+// 16px (text-base) on mobile prevents iOS auto-zoom on focus; 44px min tap target.
+const input = 'w-full rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-base sm:text-sm text-[var(--text)]';
+const btn = 'rounded-md bg-[var(--accent)] px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 min-h-[44px]';
+const tabBtn = (active: boolean) =>
+  `flex-1 sm:flex-none rounded px-3 py-2 text-sm min-h-[40px] ${active ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-muted)]'}`;
 
 function readText(file: File): Promise<string> {
   return new Promise((res, rej) => {
@@ -58,6 +62,7 @@ export function Resume() {
         )}
       </div>
 
+      <ResumePromptsAdmin />
       <BaseResumeCard base={base} onSave={saveBase} />
       <AddJobCard aiOn={aiOn} onAdd={addJob} />
 
@@ -68,51 +73,39 @@ export function Resume() {
         ) : jobs.length === 0 ? (
           <p className="mt-2 text-sm text-[var(--text-muted)]">No jobs yet. Add a JD above.</p>
         ) : (
-          <div className="mt-3 overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="text-xs uppercase text-[var(--text-muted)]">
-                <tr>
-                  <th className="py-2 pr-3">Role</th>
-                  <th className="py-2 pr-3">Company</th>
-                  <th className="py-2 pr-3">Resume</th>
-                  <th className="py-2 pr-3">Status</th>
-                  <th className="py-2 pr-3"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {jobs.map((j) => (
-                  <tr key={j.id} className="border-t border-[var(--border)]">
-                    <td className="py-2 pr-3 text-[var(--text)]">
-                      <Link to={`/resume/job/${j.id}`} className="text-[var(--accent)] no-underline hover:underline">
-                        {j.title}
-                      </Link>
-                    </td>
-                    <td className="py-2 pr-3 text-[var(--text-muted)]">{j.company || '—'}</td>
-                    <td className="py-2 pr-3 text-[var(--text-muted)]">
-                      {j.variant ? (j.variant.format === 'latex' ? 'Tailored .tex' : 'Checklist') : '—'}
-                    </td>
-                    <td className="py-2 pr-3">
-                      <select
-                        value={j.status}
-                        onChange={(e) => setJobStatus(j.id, e.target.value as JobStatus)}
-                        className={`bg-transparent text-sm ${statusColor[j.status]}`}
-                      >
-                        {JOB_STATUSES.map((s) => (
-                          <option key={s} value={s} className="bg-[var(--bg)] text-[var(--text)]">
-                            {s}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="py-2 pr-3 text-right">
-                      <button onClick={() => deleteJob(j.id)} className="text-xs text-red-400 hover:underline">
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="mt-3 space-y-3">
+            {jobs.map((j) => (
+              <div key={j.id} className="rounded-lg border border-[var(--border)] p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <Link to={`/resume/job/${j.id}`} className="min-w-0 text-[var(--accent)] no-underline hover:underline">
+                    <span className="block truncate font-medium">{j.title}</span>
+                    <span className="block truncate text-sm text-[var(--text-muted)]">{j.company || '—'}</span>
+                  </Link>
+                  {j.variant && (
+                    <span className="shrink-0 rounded-full bg-[var(--bg)] px-2 py-0.5 text-xs text-[var(--text-muted)]">
+                      {j.variant.format === 'latex' ? 'Tailored' : 'Checklist'}
+                    </span>
+                  )}
+                </div>
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  <select
+                    value={j.status}
+                    onChange={(e) => setJobStatus(j.id, e.target.value as JobStatus)}
+                    aria-label="Status"
+                    className={`min-h-[40px] rounded-md border border-[var(--border)] bg-[var(--bg)] px-2 py-1.5 text-base sm:text-sm ${statusColor[j.status]}`}
+                  >
+                    {JOB_STATUSES.map((s) => (
+                      <option key={s} value={s} className="bg-[var(--bg)] text-[var(--text)]">
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                  <button onClick={() => deleteJob(j.id)} className="px-2 py-2 text-sm text-red-400 hover:underline">
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -168,9 +161,9 @@ function BaseResumeCard({ base, onSave }: { base: BaseResume | null; onSave: (b:
         LaTeX base → tailoring edits keywords and keeps your exact formatting. PDF base → tailoring gives a keyword checklist you apply yourself.
       </p>
 
-      <div className="mt-3 inline-flex rounded-md border border-[var(--border)] p-0.5 text-sm">
+      <div className="mt-3 flex w-full rounded-md border border-[var(--border)] p-0.5 sm:inline-flex sm:w-auto">
         {(['latex', 'file'] as const).map((t) => (
-          <button key={t} onClick={() => setTab(t)} className={`rounded px-3 py-1.5 ${tab === t ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-muted)]'}`}>
+          <button key={t} onClick={() => setTab(t)} className={tabBtn(tab === t)}>
             {t === 'latex' ? 'Paste LaTeX' : 'Upload .tex / .pdf'}
           </button>
         ))}
@@ -227,9 +220,9 @@ function AddJobCard({
   return (
     <div className={card}>
       <h2 className="text-lg font-semibold text-[var(--text)]">Add a job (from a JD)</h2>
-      <div className="mt-3 inline-flex rounded-md border border-[var(--border)] p-0.5 text-sm">
+      <div className="mt-3 flex w-full rounded-md border border-[var(--border)] p-0.5 sm:inline-flex sm:w-auto">
         {(['text', 'image'] as const).map((t) => (
-          <button key={t} onClick={() => setTab(t)} className={`rounded px-3 py-1.5 ${tab === t ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-muted)]'}`}>
+          <button key={t} onClick={() => setTab(t)} className={tabBtn(tab === t)}>
             {t === 'text' ? 'Paste JD text' : 'Upload JD screenshot'}
           </button>
         ))}
